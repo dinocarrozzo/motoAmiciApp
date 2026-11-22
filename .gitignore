@@ -1,0 +1,6 @@
+node_modules
+.expo
+.env
+.superpowers
+dist
+*.apk
