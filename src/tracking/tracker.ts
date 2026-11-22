@@ -1,4 +1,4 @@
-import type { PointBuffer } from './pointBuffer';
+import type { KeyValueStore, PointBuffer } from './pointBuffer';
 import type { TrackPoint } from './types';
 
 export type TrackerStatus = 'tracking' | 'permission-denied' | 'foreground-only' | 'error';
@@ -9,6 +9,7 @@ export interface GeoLib {
   start(): Promise<unknown>;
   stop(): Promise<unknown>;
   requestPermission(): Promise<number>;
+  isEnabled(): Promise<boolean>;
   onLocation(cb: (location: any) => void): { remove(): void };
 }
 
@@ -17,6 +18,9 @@ const STATUS_ALWAYS = 3;
 const STATUS_WHEN_IN_USE = 4;
 
 export const FLUSH_INTERVAL_MS = 15_000;
+
+/** Chiave dove si salva la sessione in corso, per il gestore headless. */
+export const SESSION_KEY = 'motoamici.currentSession';
 
 /** Configurazione di partenza, da tarare con la prova sul campo. */
 export const TRACKER_CONFIG: Record<string, unknown> = {
@@ -50,12 +54,24 @@ function toPoint(sessionId: string, l: any): TrackPoint {
 export function createTracker(deps: {
   lib: GeoLib;
   buffer: PointBuffer;
+  store: KeyValueStore;
   ensureSignedIn: () => Promise<void>;
 }) {
-  const { lib, buffer, ensureSignedIn } = deps;
+  const { lib, buffer, store, ensureSignedIn } = deps;
   let readied = false;
   let subscription: { remove(): void } | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
+
+  function attach(sessionId: string): void {
+    subscription?.remove();
+    subscription = lib.onLocation((l) => {
+      buffer.add(toPoint(sessionId, l)).catch(() => undefined);
+    });
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => {
+      buffer.flush().catch(() => undefined);
+    }, FLUSH_INTERVAL_MS);
+  }
 
   return {
     async start(sessionId: string): Promise<TrackerStatus> {
@@ -69,18 +85,28 @@ export function createTracker(deps: {
           await lib.ready(TRACKER_CONFIG);
           readied = true;
         }
-        subscription?.remove();
-        subscription = lib.onLocation((l) => {
-          buffer.add(toPoint(sessionId, l)).catch(() => undefined);
-        });
+        await store.setItem(SESSION_KEY, sessionId);
+        attach(sessionId);
         await lib.start();
-        if (timer) clearInterval(timer);
-        timer = setInterval(() => {
-          buffer.flush().catch(() => undefined);
-        }, FLUSH_INTERVAL_MS);
         return 'tracking';
       } catch {
         return 'error';
+      }
+    },
+
+    /** App riaperta mentre il servizio GPS è ancora attivo: riprende l'ascolto della sessione in corso. */
+    async restore(): Promise<string | null> {
+      try {
+        const sessionId = await store.getItem(SESSION_KEY);
+        if (!sessionId || !(await lib.isEnabled())) return null;
+        if (!readied) {
+          await lib.ready(TRACKER_CONFIG);
+          readied = true;
+        }
+        attach(sessionId);
+        return sessionId;
+      } catch {
+        return null;
       }
     },
 
@@ -89,8 +115,23 @@ export function createTracker(deps: {
       timer = null;
       await buffer.flush();
       await lib.stop();
+      await store.setItem(SESSION_KEY, '');
       subscription?.remove();
       subscription = null;
     },
+  };
+}
+
+/**
+ * Gestore per quando il sistema chiude l'app ma il servizio GPS continua:
+ * la libreria lo chiama in un contesto JavaScript senza interfaccia.
+ */
+export function createHeadlessHandler(deps: { buffer: PointBuffer; store: KeyValueStore }) {
+  return async (event: { name: string; params: any }): Promise<void> => {
+    if (event.name !== 'location') return;
+    const sessionId = await deps.store.getItem(SESSION_KEY);
+    if (!sessionId) return;
+    await deps.buffer.add(toPoint(sessionId, event.params));
+    await deps.buffer.flush();
   };
 }

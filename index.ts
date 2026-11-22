@@ -1,6 +1,10 @@
 import { registerRootComponent } from 'expo';
 
 import App from './App';
+import { registerHeadless } from './src/tracking/defaultTracker';
+
+// Serve a continuare a registrare e inviare i punti se il sistema chiude l'app.
+registerHeadless();
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
 // It also ensures that whether you load the app in Expo Go or in a native build,

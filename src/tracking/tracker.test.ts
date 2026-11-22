@@ -1,4 +1,4 @@
-import { createTracker, type GeoLib } from './tracker';
+import { createHeadlessHandler, createTracker, SESSION_KEY, type GeoLib } from './tracker';
 import { KeyValueStore, PointBuffer } from './pointBuffer';
 import type { TrackPoint } from './types';
 
@@ -21,7 +21,7 @@ afterEach(async () => {
   while (started.length) await started.pop()!.stop();
 });
 
-function setup(permission: number, opts: { readyFails?: boolean } = {}) {
+function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean } = {}) {
   const calls: string[] = [];
   let listener: ((l: any) => void) | null = null;
   const sent: TrackPoint[] = [];
@@ -37,11 +37,13 @@ function setup(permission: number, opts: { readyFails?: boolean } = {}) {
       calls.push('stop');
     },
     requestPermission: async () => permission,
+    isEnabled: async () => opts.enabled ?? false,
     onLocation: (cb) => {
       listener = cb;
       return { remove: () => calls.push('unsubscribe') };
     },
   };
+  const store = memoryStore();
   const buffer = new PointBuffer({
     store: memoryStore(),
     send: async (pts) => {
@@ -52,12 +54,13 @@ function setup(permission: number, opts: { readyFails?: boolean } = {}) {
   const tracker = createTracker({
     lib,
     buffer,
+    store,
     ensureSignedIn: async () => {
       calls.push('signin');
     },
   });
   started.push(tracker);
-  return { tracker, buffer, calls, sent, emit: (l: any) => listener!(l) };
+  return { tracker, buffer, store, calls, sent, emit: (l: any) => listener!(l) };
 }
 
 const loc = (over: object = {}) => ({
@@ -138,4 +141,78 @@ test('mentre traccia, invia i punti pendenti ogni 15 secondi', async () => {
   } finally {
     jest.useRealTimers();
   }
+});
+
+test('start salva l\'id della sessione nello store e stop lo cancella', async () => {
+  const { tracker, store } = setup(ALWAYS);
+  await tracker.start('sess-42');
+  expect(await store.getItem(SESSION_KEY)).toBe('sess-42');
+  await tracker.stop();
+  expect(await store.getItem(SESSION_KEY)).toBe('');
+});
+
+describe('gestore headless (app chiusa dal sistema)', () => {
+  function headlessSetup(sessionId: string | null) {
+    const store = memoryStore();
+    const sent: TrackPoint[] = [];
+    const buffer = new PointBuffer({
+      store: memoryStore(),
+      send: async (pts) => {
+        sent.push(...pts);
+      },
+    });
+    const handle = createHeadlessHandler({ buffer, store });
+    return { handle, sent, store, ready: sessionId ? store.setItem(SESSION_KEY, sessionId) : Promise.resolve() };
+  }
+
+  test('un evento "location" con sessione salvata viene aggiunto e inviato', async () => {
+    const { handle, sent, ready } = headlessSetup('sess-1');
+    await ready;
+    await handle({ name: 'location', params: loc() });
+    expect(sent).toHaveLength(1);
+    expect(sent[0].sessionId).toBe('sess-1');
+  });
+
+  test('senza sessione salvata l\'evento viene ignorato', async () => {
+    const { handle, sent } = headlessSetup(null);
+    await handle({ name: 'location', params: loc() });
+    expect(sent).toEqual([]);
+  });
+
+  test('con sessione vuota (giro terminato) l\'evento viene ignorato', async () => {
+    const { handle, sent, store } = headlessSetup('sess-1');
+    await store.setItem(SESSION_KEY, '');
+    await handle({ name: 'location', params: loc() });
+    expect(sent).toEqual([]);
+  });
+
+  test('gli altri eventi non fanno nulla', async () => {
+    const { handle, sent, ready } = headlessSetup('sess-1');
+    await ready;
+    await handle({ name: 'heartbeat', params: {} });
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('restore (app riaperta mentre il servizio GPS è ancora attivo)', () => {
+  test('con sessione salvata e servizio attivo → restituisce la sessione, senza riavviare', async () => {
+    const { tracker, store, calls, emit, sent } = setup(ALWAYS, { enabled: true });
+    await store.setItem(SESSION_KEY, 'sess-9');
+    expect(await tracker.restore()).toBe('sess-9');
+    expect(calls).not.toContain('start');
+    emit(loc());
+    await tracker.stop();
+    expect(sent[0].sessionId).toBe('sess-9');
+  });
+
+  test('senza sessione salvata → null', async () => {
+    const { tracker } = setup(ALWAYS, { enabled: true });
+    expect(await tracker.restore()).toBeNull();
+  });
+
+  test('con sessione salvata ma servizio non attivo → null', async () => {
+    const { tracker, store } = setup(ALWAYS, { enabled: false });
+    await store.setItem(SESSION_KEY, 'sess-9');
+    expect(await tracker.restore()).toBeNull();
+  });
 });

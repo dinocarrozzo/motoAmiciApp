@@ -25,6 +25,16 @@ export function TrackScreen() {
   const [, tick] = useState(0);
 
   useEffect(() => {
+    // Se il sistema ha chiuso l'app ma il GPS sta ancora tracciando, riprendi la sessione.
+    tracker.restore().then((id) => {
+      if (id) {
+        setSessionId(id);
+        setStatus('tracking');
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     const id = setInterval(async () => {
       setPending(await buffer.pendingCount());
       tick((n) => n + 1);
