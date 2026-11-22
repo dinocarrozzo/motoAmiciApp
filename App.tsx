@@ -1,20 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { BatterySetupScreen } from './src/screens/BatterySetupScreen';
+import { TrackScreen } from './src/screens/TrackScreen';
 
 export default function App() {
+  const [batteryDone, setBatteryDone] = useState(false);
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <>
+      {batteryDone ? <TrackScreen /> : <BatterySetupScreen onDone={() => setBatteryDone(true)} />}
       <StatusBar style="auto" />
-    </View>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
