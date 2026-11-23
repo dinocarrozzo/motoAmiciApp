@@ -1,5 +1,4 @@
 import { Linking, PermissionsAndroid, Platform } from 'react-native';
-import BackgroundGeolocation from 'react-native-background-geolocation';
 import type { Grants, StepId } from './flow';
 
 const FINE = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
@@ -7,16 +6,18 @@ const COARSE = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
 const BACKGROUND = PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION;
 const NOTIFICATIONS = PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS;
 
+// Le impostazioni batteria usano la libreria nativa solo quando servono (senza avviare il GPS).
+const deviceSettings = () => require('react-native-background-geolocation').default.deviceSettings;
+
 // Su Android prima della 13 le notifiche non richiedono permesso.
 const needsNotificationPermission = () => Platform.OS === 'android' && Number(Platform.Version) >= 33;
 
 export async function checkAll(): Promise<Grants> {
-  const ds = BackgroundGeolocation.deviceSettings;
   return {
     'location-foreground': await PermissionsAndroid.check(FINE),
     'location-background': await PermissionsAndroid.check(BACKGROUND),
     notifications: needsNotificationPermission() ? await PermissionsAndroid.check(NOTIFICATIONS) : true,
-    battery: await ds.isIgnoringBatteryOptimizations(),
+    battery: await deviceSettings().isIgnoringBatteryOptimizations().catch(() => false),
   };
 }
 
@@ -34,7 +35,7 @@ export async function request(id: StepId): Promise<void> {
       if (needsNotificationPermission()) await PermissionsAndroid.request(NOTIFICATIONS);
       return;
     case 'battery': {
-      const ds = BackgroundGeolocation.deviceSettings;
+      const ds = deviceSettings();
       const req = await ds.showIgnoreBatteryOptimizations();
       await ds.show(req);
       return;

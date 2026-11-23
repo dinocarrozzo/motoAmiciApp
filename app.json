@@ -35,6 +35,14 @@
       [
         "react-native-background-geolocation",
         {}
+      ],
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "MotoAmici usa la posizione anche a schermo bloccato per condividere il giro."
+        }
       ]
     ],
     "extra": {

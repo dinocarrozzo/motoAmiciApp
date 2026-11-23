@@ -1,5 +1,4 @@
 import * as Device from 'expo-device';
-import BackgroundGeolocation from 'react-native-background-geolocation';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { batteryInstructions } from '../battery/batteryInstructions';
 
@@ -21,7 +20,7 @@ export function BatterySetupScreen({ onDone }: { onDone: () => void }) {
         style={styles.secondary}
         onPress={async () => {
           try {
-            const ds = BackgroundGeolocation.deviceSettings;
+            const ds = require('react-native-background-geolocation').default.deviceSettings;
             await ds.show(await ds.showPowerManager());
           } catch {
             Linking.openSettings();
