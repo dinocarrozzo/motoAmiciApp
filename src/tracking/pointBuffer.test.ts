@@ -118,3 +118,58 @@ test('un punto aggiunto durante un invio in corso non va perso', async () => {
   expect(received).toEqual([1000, 2000]);
   expect(await buf.pendingCount()).toBe(0);
 });
+
+describe('un invio che non risponde non deve bloccare il resto', () => {
+  const never = () => new Promise<void>(() => undefined);
+  const withTimeout = <T,>(p: Promise<T>, ms = 400) =>
+    Promise.race([p.then(() => 'ok'), new Promise<string>((r) => setTimeout(() => r('bloccato'), ms))]);
+
+  test('add e pendingCount rispondono anche mentre un invio è appeso', async () => {
+    const buf = new PointBuffer({ store: memoryStore(), send: never, sendTimeoutMs: 1500 });
+    await buf.add(pt(1));
+    const flushing = buf.flush();
+    expect(await withTimeout(buf.add(pt(2)))).toBe('ok');
+    expect(await withTimeout(buf.pendingCount())).toBe('ok');
+    await flushing; // si chiude da solo allo scadere del tempo
+  });
+
+  test('flush con invio che non risponde ritorna allo scadere del tempo e tiene i punti', async () => {
+    const buf = new PointBuffer({ store: memoryStore(), send: never, sendTimeoutMs: 50 });
+    await buf.add(pt(1));
+    await buf.add(pt(2));
+    expect(await buf.flush()).toEqual({ sent: 0, pending: 2 });
+  });
+
+  test('dopo un invio scaduto, il flush successivo rimanda gli stessi punti', async () => {
+    let hang = true;
+    const received: number[] = [];
+    const buf = new PointBuffer({
+      store: memoryStore(),
+      sendTimeoutMs: 50,
+      send: (pts) => {
+        if (hang) return never();
+        received.push(...pts.map((p) => p.recordedAt));
+        return Promise.resolve();
+      },
+    });
+    await buf.add(pt(1));
+    await buf.flush();
+    hang = false;
+    expect(await buf.flush()).toEqual({ sent: 1, pending: 0 });
+    expect(received).toEqual([1000]);
+  });
+
+  test('due flush contemporanei inviano il lotto una volta sola', async () => {
+    let calls = 0;
+    const buf = new PointBuffer({
+      store: memoryStore(),
+      send: async () => {
+        calls++;
+        await new Promise((r) => setTimeout(r, 30));
+      },
+    });
+    await buf.add(pt(1));
+    await Promise.all([buf.flush(), buf.flush()]);
+    expect(calls).toBe(1);
+  });
+});

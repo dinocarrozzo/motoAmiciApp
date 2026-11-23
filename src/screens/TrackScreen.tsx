@@ -51,8 +51,11 @@ export function TrackScreen() {
     setStatus(await tracker.start(id));
   };
   const stop = async () => {
-    await tracker.stop();
-    setStatus('idle');
+    try {
+      await tracker.stop();
+    } finally {
+      setStatus('idle'); // anche se qualcosa va storto, il tasto torna a «Avvia»
+    }
   };
 
   const tracking = status === 'tracking';

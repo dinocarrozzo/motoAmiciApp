@@ -137,11 +137,16 @@ export function createTracker(deps: {
     async stop(): Promise<void> {
       if (timer) clearInterval(timer);
       timer = null;
-      await buffer.flush();
-      await lib.stop();
-      await store.setItem(SESSION_KEY, '');
       subscription?.remove();
       subscription = null;
+      try {
+        // Prima si ferma il GPS, così Ferma funziona subito anche senza rete.
+        await lib.stop();
+      } finally {
+        await store.setItem(SESSION_KEY, '');
+        // Poi si prova a inviare gli ultimi punti, con un tempo massimo.
+        await buffer.flush();
+      }
     },
   };
 }

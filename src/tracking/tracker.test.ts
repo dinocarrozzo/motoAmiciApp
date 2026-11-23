@@ -21,7 +21,7 @@ afterEach(async () => {
   while (started.length) await started.pop()!.stop();
 });
 
-function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean; signInFails?: boolean; permissionRejects?: unknown } = {}) {
+function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean; signInFails?: boolean; permissionRejects?: unknown; sendHangs?: boolean } = {}) {
   const calls: string[] = [];
   let listener: ((l: any) => void) | null = null;
   const sent: TrackPoint[] = [];
@@ -49,7 +49,9 @@ function setup(permission: number, opts: { readyFails?: boolean; enabled?: boole
   const store = memoryStore();
   const buffer = new PointBuffer({
     store: memoryStore(),
+    sendTimeoutMs: 100,
     send: async (pts) => {
+      if (opts.sendHangs) return new Promise<void>(() => undefined);
       calls.push(`send:${pts.length}`);
       sent.push(...pts);
     },
@@ -119,13 +121,27 @@ test('velocità negativa (sconosciuta) diventa null; timestamp numerico accettat
   expect(sent[0].recordedAt).toBe(1_700_000_000_000);
 });
 
-test('stop esegue un flush prima di fermare la libreria', async () => {
+test('stop ferma subito la libreria e poi invia i punti pendenti', async () => {
   const { tracker, emit, calls } = setup(ALWAYS);
   await tracker.start('s1');
   emit(loc());
   await tracker.stop();
-  expect(calls.indexOf('send:1')).toBeGreaterThan(-1);
-  expect(calls.indexOf('send:1')).toBeLessThan(calls.indexOf('stop'));
+  expect(calls.indexOf('stop')).toBeGreaterThan(-1);
+  expect(calls.indexOf('send:1')).toBeGreaterThan(calls.indexOf('stop'));
+});
+
+test('stop non si blocca se la rete non risponde: ferma la libreria e ritorna', async () => {
+  const { tracker, emit, calls, store } = setup(ALWAYS, { sendHangs: true });
+  await tracker.start('s1');
+  emit(loc());
+  await new Promise((r) => setTimeout(r, 10));
+  const res = await Promise.race([
+    tracker.stop().then(() => 'fermato'),
+    new Promise<string>((r) => setTimeout(() => r('bloccato'), 2000)),
+  ]);
+  expect(res).toBe('fermato');
+  expect(calls).toContain('stop');
+  expect(await store.getItem(SESSION_KEY)).toBe('');
 });
 
 test('un errore della libreria (es. licenza) dà "error" e non lancia', async () => {

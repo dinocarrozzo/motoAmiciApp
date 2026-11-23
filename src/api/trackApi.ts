@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { fetchWithTimeout } from './fetchWithTimeout';
 import type { TrackPoint } from '../tracking/types';
 
 type DbError = { message: string } | null;
@@ -56,6 +57,7 @@ function api() {
     }
     const client = createClient(url, key, {
       auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true },
+      global: { fetch: fetchWithTimeout(15_000) },
     });
     defaultApi = createTrackApi(client as unknown as TrackClient);
   }
