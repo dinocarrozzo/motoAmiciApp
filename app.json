@@ -33,10 +33,6 @@
     },
     "plugins": [
       [
-        "react-native-background-geolocation",
-        {}
-      ],
-      [
         "expo-location",
         {
           "isAndroidBackgroundLocationEnabled": true,

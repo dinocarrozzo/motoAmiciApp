@@ -16,19 +16,6 @@ export function BatterySetupScreen({ onDone }: { onDone: () => void }) {
           <Text style={styles.step}>{s}</Text>
         </View>
       ))}
-      <TouchableOpacity
-        style={styles.secondary}
-        onPress={async () => {
-          try {
-            const ds = require('react-native-background-geolocation').default.deviceSettings;
-            await ds.show(await ds.showPowerManager());
-          } catch {
-            Linking.openSettings();
-          }
-        }}
-      >
-        <Text style={styles.secondaryText}>Apri la gestione energia del telefono</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.secondary} onPress={() => Linking.openSettings()}>
         <Text style={styles.secondaryText}>Apri le impostazioni dell'app</Text>
       </TouchableOpacity>

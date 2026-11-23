@@ -5,7 +5,7 @@ export type TrackerStatus = 'tracking' | 'permission-denied' | 'foreground-only'
 
 /** La parte della libreria GPS che ci serve (permette una libreria finta nei test). */
 export interface GeoLib {
-  ready(config: Record<string, unknown>): Promise<unknown>;
+  ready(): Promise<unknown>;
   start(): Promise<unknown>;
   stop(): Promise<unknown>;
   requestPermission(): Promise<number>;
@@ -21,23 +21,6 @@ export const FLUSH_INTERVAL_MS = 15_000;
 
 /** Chiave dove si salva la sessione in corso, per il gestore headless. */
 export const SESSION_KEY = 'motoamici.currentSession';
-
-/** Configurazione di partenza, da tarare con la prova sul campo. */
-export const TRACKER_CONFIG: Record<string, unknown> = {
-  desiredAccuracy: -1, // High
-  distanceFilter: 10, // metri
-  stopTimeout: 5, // minuti di fermo prima di sospendere il tracciamento
-  stopOnTerminate: false,
-  startOnBoot: true,
-  enableHeadless: true,
-  heartbeatInterval: 60,
-  locationAuthorizationRequest: 'Always',
-  notification: {
-    title: 'MotoAmici',
-    text: 'MotoAmici sta tracciando il giro',
-    sticky: true,
-  },
-};
 
 function toPoint(sessionId: string, l: any): TrackPoint {
   const speed = typeof l.coords.speed === 'number' && l.coords.speed >= 0 ? l.coords.speed : null;
@@ -101,7 +84,7 @@ export function createTracker(deps: {
         if (permission !== STATUS_ALWAYS) return 'permission-denied';
 
         if (!readied) {
-          await step('Libreria GPS', () => lib.ready(TRACKER_CONFIG));
+          await step('Libreria GPS', () => lib.ready());
           readied = true;
         }
         await store.setItem(SESSION_KEY, sessionId);
@@ -124,7 +107,7 @@ export function createTracker(deps: {
         const sessionId = await store.getItem(SESSION_KEY);
         if (!sessionId || !(await lib.isEnabled())) return null;
         if (!readied) {
-          await lib.ready(TRACKER_CONFIG);
+          await lib.ready();
           readied = true;
         }
         attach(sessionId);
