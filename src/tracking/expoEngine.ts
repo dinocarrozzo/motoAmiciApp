@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { buffer } from './buffer';
-import { statusFromPermissions, toLibLocation } from './expoEngineLogic';
+import { statusFromPermissions, toLibLocation, TRACKING_PROFILE } from './expoEngineLogic';
 import { createHeadlessHandler, type GeoLib } from './tracker';
 
 export const TASK_NAME = 'motoamici-location';
@@ -26,9 +26,9 @@ export const expoGeoLib: GeoLib = {
   ready: async () => undefined,
   start: () =>
     Location.startLocationUpdatesAsync(TASK_NAME, {
-      accuracy: Location.Accuracy.BestForNavigation,
-      distanceInterval: 10,
-      timeInterval: 5000,
+      accuracy: Location.Accuracy[TRACKING_PROFILE.accuracy],
+      distanceInterval: TRACKING_PROFILE.distanceIntervalM,
+      timeInterval: TRACKING_PROFILE.timeIntervalMs,
       pausesUpdatesAutomatically: false,
       showsBackgroundLocationIndicator: true,
       foregroundService: {

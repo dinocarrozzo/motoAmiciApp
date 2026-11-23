@@ -38,3 +38,7 @@ NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt \
 SUPABASE_URL=https://uqymtqlcotuhudshwszf.supabase.co SUPABASE_SERVICE_ROLE_KEY=proxy-injected \
 npx tsx scripts/analyze-session.ts <sessione> --battery-start N --battery-end N --hours N
 ```
+
+## Risultati finora
+- Motore gratuito (expo-location), prova di 34 min, precisione massima, un punto ogni 5 s: in movimento 98% degli intervalli entro 15 s, buco massimo 15 s; consumo ~22,6 %/h (schermo in parte acceso, quindi non confrontabile col limite dell'8 %/h).
+- Profilo attuale (scelto dall'utente per ridurre la batteria): precisione alta, un punto ogni 10 s, filtro 10 m. Con questo ritmo il criterio «95% degli intervalli ≤ 15 s» va letto sui soli intervalli in movimento.

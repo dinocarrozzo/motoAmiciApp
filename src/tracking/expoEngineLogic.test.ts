@@ -28,3 +28,9 @@ test('toLibLocation lascia a null accuracy e speed quando mancano', () => {
   expect(out.coords.accuracy).toBeNull();
   expect(out.coords.speed).toBeNull();
 });
+
+import { TRACKING_PROFILE } from './expoEngineLogic';
+
+test('profilo di tracciamento scelto: precisione alta, un punto ogni 10 s, filtro a 10 m', () => {
+  expect(TRACKING_PROFILE).toEqual({ accuracy: 'High', timeIntervalMs: 10_000, distanceIntervalM: 10 });
+});

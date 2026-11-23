@@ -21,3 +21,13 @@ export function toLibLocation(l: ExpoLocation) {
     },
   };
 }
+
+/**
+ * Profilo di tracciamento del motore gratuito. Scelto per ridurre la batteria:
+ * precisione alta (non "navigazione"), un punto ogni 10 secondi, filtro di 10 metri.
+ */
+export const TRACKING_PROFILE = {
+  accuracy: 'High' as 'High',
+  timeIntervalMs: 10_000,
+  distanceIntervalM: 10,
+};
