@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { buffer, stats, tracker } from '../tracking/defaultTracker';
+import { resetStats } from '../tracking/stats';
 import type { TrackerStatus } from '../tracking/tracker';
 
 function uuidv4(): string {
@@ -44,6 +45,8 @@ export function TrackScreen() {
 
   const start = async () => {
     const id = uuidv4();
+    resetStats();
+    setPending(0);
     setSessionId(id);
     setStatus(await tracker.start(id));
   };
