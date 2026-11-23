@@ -30,3 +30,11 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
 
 Il referto mostra buco massimo, buchi oltre i 120 s e consumo orario. L'intervallo mediano è un indicatore, il 95% va stimato guardando che il mediano sia ben sotto i 15 s.
 Se i criteri non sono rispettati: si prova la configurazione (frequenza, filtro di distanza), poi il fallback `expo-location` o il tracciamento nativo per quella parte.
+
+## Nota per le sessioni Claude (container cloud)
+La chiave Supabase è salvata come credenziale di rete: nello script si usa il segnaposto `proxy-injected` e il proxy mette la chiave vera. Node deve passare dal proxy:
+```
+NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt \
+SUPABASE_URL=https://uqymtqlcotuhudshwszf.supabase.co SUPABASE_SERVICE_ROLE_KEY=proxy-injected \
+npx tsx scripts/analyze-session.ts <sessione> --battery-start N --battery-end N --hours N
+```
