@@ -21,7 +21,7 @@ afterEach(async () => {
   while (started.length) await started.pop()!.stop();
 });
 
-function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean } = {}) {
+function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean; signInFails?: boolean } = {}) {
   const calls: string[] = [];
   let listener: ((l: any) => void) | null = null;
   const sent: TrackPoint[] = [];
@@ -57,6 +57,7 @@ function setup(permission: number, opts: { readyFails?: boolean; enabled?: boole
     store,
     ensureSignedIn: async () => {
       calls.push('signin');
+      if (opts.signInFails) throw new Error('accesso anonimo disattivato');
     },
   });
   started.push(tracker);
@@ -214,5 +215,25 @@ describe('restore (app riaperta mentre il servizio GPS è ancora attivo)', () =>
     const { tracker, store } = setup(ALWAYS, { enabled: false });
     await store.setItem(SESSION_KEY, 'sess-9');
     expect(await tracker.restore()).toBeNull();
+  });
+});
+
+describe('lastError (dettaglio dell\'errore mostrato all\'utente)', () => {
+  test('errore della libreria GPS → messaggio con il passaggio e la causa', async () => {
+    const { tracker } = setup(ALWAYS, { readyFails: true });
+    expect(await tracker.start('s1')).toBe('error');
+    expect(tracker.lastError()).toBe('Libreria GPS: licenza');
+  });
+
+  test('errore di accesso a Supabase → messaggio con il passaggio e la causa', async () => {
+    const { tracker } = setup(ALWAYS, { signInFails: true });
+    expect(await tracker.start('s1')).toBe('error');
+    expect(tracker.lastError()).toBe('Accesso a Supabase: accesso anonimo disattivato');
+  });
+
+  test('dopo un avvio riuscito lastError torna null', async () => {
+    const { tracker } = setup(ALWAYS);
+    await tracker.start('s1');
+    expect(tracker.lastError()).toBeNull();
   });
 });

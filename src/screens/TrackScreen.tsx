@@ -57,6 +57,9 @@ export function TrackScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>MotoAmici GPS (prova)</Text>
       {status !== 'idle' && status !== 'tracking' && <Text style={styles.warning}>{WARNINGS[status]}</Text>}
+      {status === 'error' && tracker.lastError() && (
+        <Text style={styles.warning}>Dettaglio: {tracker.lastError()}</Text>
+      )}
       <Text style={styles.line}>Stato: {tracking ? 'sta tracciando' : 'fermo'}</Text>
       <Text style={styles.line}>Sessione: {sessionId ?? '—'}</Text>
       <Text style={styles.line}>Punti registrati: {stats.sent + pending}</Text>

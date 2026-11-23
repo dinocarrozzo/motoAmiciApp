@@ -61,6 +61,16 @@ export function createTracker(deps: {
   let readied = false;
   let subscription: { remove(): void } | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
+  let lastError: string | null = null;
+
+  async function step<T>(name: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = `${name}: ${e instanceof Error ? e.message : String(e)}`;
+      throw e;
+    }
+  }
 
   function attach(sessionId: string): void {
     subscription?.remove();
@@ -75,23 +85,29 @@ export function createTracker(deps: {
 
   return {
     async start(sessionId: string): Promise<TrackerStatus> {
+      lastError = null;
       try {
-        await ensureSignedIn();
-        const permission = await lib.requestPermission();
+        await step('Accesso a Supabase', ensureSignedIn);
+        const permission = await step('Permesso di posizione', () => lib.requestPermission());
         if (permission === STATUS_WHEN_IN_USE) return 'foreground-only';
         if (permission !== STATUS_ALWAYS) return 'permission-denied';
 
         if (!readied) {
-          await lib.ready(TRACKER_CONFIG);
+          await step('Libreria GPS', () => lib.ready(TRACKER_CONFIG));
           readied = true;
         }
         await store.setItem(SESSION_KEY, sessionId);
         attach(sessionId);
-        await lib.start();
+        await step('Libreria GPS', () => lib.start());
         return 'tracking';
       } catch {
         return 'error';
       }
+    },
+
+    /** Dettaglio dell'ultimo errore di avvio, da mostrare all'utente. */
+    lastError(): string | null {
+      return lastError;
     },
 
     /** App riaperta mentre il servizio GPS è ancora attivo: riprende l'ascolto della sessione in corso. */
