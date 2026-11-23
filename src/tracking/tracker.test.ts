@@ -21,7 +21,7 @@ afterEach(async () => {
   while (started.length) await started.pop()!.stop();
 });
 
-function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean; signInFails?: boolean } = {}) {
+function setup(permission: number, opts: { readyFails?: boolean; enabled?: boolean; signInFails?: boolean; permissionRejects?: unknown } = {}) {
   const calls: string[] = [];
   let listener: ((l: any) => void) | null = null;
   const sent: TrackPoint[] = [];
@@ -36,7 +36,10 @@ function setup(permission: number, opts: { readyFails?: boolean; enabled?: boole
     stop: async () => {
       calls.push('stop');
     },
-    requestPermission: async () => permission,
+    requestPermission: async () => {
+      if (opts.permissionRejects !== undefined) throw opts.permissionRejects;
+      return permission;
+    },
     isEnabled: async () => opts.enabled ?? false,
     onLocation: (cb) => {
       listener = cb;
@@ -235,5 +238,29 @@ describe('lastError (dettaglio dell\'errore mostrato all\'utente)', () => {
     const { tracker } = setup(ALWAYS);
     await tracker.start('s1');
     expect(tracker.lastError()).toBeNull();
+  });
+});
+
+describe('la libreria rifiuta la richiesta con il codice di stato', () => {
+  test('rifiuto con 2 (negato) → "permission-denied", non "error"', async () => {
+    const { tracker, calls } = setup(ALWAYS, { permissionRejects: 2 });
+    expect(await tracker.start('s1')).toBe('permission-denied');
+    expect(calls).not.toContain('start');
+  });
+
+  test('rifiuto con 5 (negato per sempre) → "permission-denied"', async () => {
+    const { tracker } = setup(ALWAYS, { permissionRejects: 5 });
+    expect(await tracker.start('s1')).toBe('permission-denied');
+  });
+
+  test('rifiuto con 4 (solo in uso) → "foreground-only"', async () => {
+    const { tracker } = setup(ALWAYS, { permissionRejects: 4 });
+    expect(await tracker.start('s1')).toBe('foreground-only');
+  });
+
+  test('un errore vero (non un codice) resta "error" con il dettaglio', async () => {
+    const { tracker } = setup(ALWAYS, { permissionRejects: new Error('servizio non disponibile') });
+    expect(await tracker.start('s1')).toBe('error');
+    expect(tracker.lastError()).toBe('Permesso di posizione: servizio non disponibile');
   });
 });

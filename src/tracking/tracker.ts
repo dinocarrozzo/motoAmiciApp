@@ -88,7 +88,15 @@ export function createTracker(deps: {
       lastError = null;
       try {
         await step('Accesso a Supabase', ensureSignedIn);
-        const permission = await step('Permesso di posizione', () => lib.requestPermission());
+        const permission = await step('Permesso di posizione', async () => {
+          try {
+            return await lib.requestPermission();
+          } catch (e) {
+            // La libreria rifiuta la richiesta con il codice di stato (es. 2 = negato).
+            if (typeof e === 'number') return e;
+            throw e;
+          }
+        });
         if (permission === STATUS_WHEN_IN_USE) return 'foreground-only';
         if (permission !== STATUS_ALWAYS) return 'permission-denied';
 
