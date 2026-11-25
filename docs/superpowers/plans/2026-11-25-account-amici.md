@@ -16,7 +16,7 @@
 - Password di almeno 8 caratteri. Nickname 3-20 caratteri, solo lettere, numeri, punto, trattino e trattino basso; unico senza distinguere le maiuscole.
 - Ricerca amici: parte da 2 caratteri, al massimo 10 risultati, restituisce solo id, nickname, nome, avatar e sesso. Mai email, telefono o posizione.
 - Il contatto fidato è visibile solo al proprietario.
-- Blocco: invisibile nei due sensi (chi blocca e chi è bloccato non si vedono in ricerca, richieste ed elenchi); nessuna notifica al bloccato. Bloccare cancella l'amicizia e le richieste in sospeso.
+- Blocco: invisibile nei due sensi (chi blocca e chi è bloccato non si vedono in ricerca, richieste ed elenchi); nessuna notifica al bloccato. Bloccare NASCONDE amicizie e richieste in sospeso senza cancellarle: sbloccando tornano come prima (modificato il 2026-11-25 su richiesta dell'utente; migrazione 0003).
 - Le regole di visibilità stanno nel database (accesso per riga e funzioni), non solo nell'app.
 - Nessuna chiave segreta nel repository. Il tracciamento GPS esistente non deve rompersi: i 73 test esistenti restano verdi.
 - Conferma dell'email **spenta** durante lo sviluppo, da riaccendere prima della pubblicazione con un servizio di invio email.

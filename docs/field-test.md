@@ -54,9 +54,11 @@ Serve la build con gli account. Due utenti: A su un telefono, B sull'altro.
 2. **Nickname già preso**: B prova a registrarsi con lo stesso nickname di A (anche con maiuscole diverse): deve comparire «Completa il profilo» con il messaggio, non un blocco.
 3. **Ricerca**: A scrive 2 lettere del nickname di B nella scheda Amici: B deve comparire mentre si scrive. Con una lettera sola non cerca.
 4. **Amicizia**: A tocca «Aggiungi» su B. B vede la richiesta nella scheda Richieste e tocca «Accetta»: entrambi si trovano tra gli Amici.
-5. **Blocco**: A blocca B (conferma). B non trova più A nella ricerca e A non trova B; A vede B in «Bloccati»; B non vede nessun avviso. A sblocca: tornano a trovarsi.
+5. **Blocco**: A blocca B (conferma). B non trova più A nella ricerca e A non trova B; A vede B in «Bloccati»; B non vede nessun avviso. A sblocca: tornano a trovarsi **e, se erano amici, l'amicizia ricompare** (anche per B).
 6. **Contatto fidato**: nel Profilo di A inserisci nome e numero (anche scritto con spazi): salvato in formato +39…; poi svuota i due campi e salva: il contatto viene rimosso.
 7. **Esci e rientra**: Profilo → «Esci dall'account», poi accedi di nuovo. Password sbagliata → «Credenziali non valide».
 8. **Recupero password**: dalla schermata di accesso «Password dimenticata?» → email → tocca il link dal telefono: l'app si apre su «Scegli una nuova password». Attenzione: il servizio email gratuito invia al massimo 2 messaggi l'ora.
 9. **Tracciamento con l'account**: Avvia un giro di qualche minuto, poi Ferma: i punti arrivano (stesso referto di prima).
 10. **Sessione lunga** (da fare quando capita): tracciare per più di 1 ora con l'account attivo; dopo il referto non devono esserci buchi per scadenza della sessione.
+
+- Prima prova su Xiaomi (25/11): registrazione con email o nickname già usati → errore chiaro; ricerca con suggerimenti, richiesta, blocco: ok. Trovati due difetti, corretti: (1) sesso e tipo di moto non erano obbligatori; (2) sbloccando un amico spariva dall'elenco (il blocco cancellava l'amicizia). Il passo 1 della prova diventa: **non si può proseguire senza scegliere sesso e moto**, e gli account già creati senza moto vedono «Completa il profilo».

@@ -88,15 +88,33 @@ select t.as_user('bbbbbbbb-0000-0000-0000-000000000002');
 select public.respond_friend_request('aaaaaaaa-0000-0000-0000-000000000001', true);
 select t.assert((select count(*) from public.list_friends()) = 1, 'B ha accettato: A è tra gli amici');
 
--- 6. Bloccare un amico cancella l'amicizia
+-- 6. Bloccare NASCONDE l'amicizia, sbloccare la RIPRISTINA (non si cancella niente)
 select t.as_user('aaaaaaaa-0000-0000-0000-000000000001');
 select public.block_user('cccccccc-0000-0000-0000-000000000003');
-select t.assert((select count(*) from public.list_friends() where nickname = 'luca') = 0, 'bloccare cancella l''amicizia');
+select t.assert((select count(*) from public.list_friends() where nickname = 'luca') = 0, 'bloccato: luca sparisce dagli amici');
 select t.as_user('cccccccc-0000-0000-0000-000000000003');
-select t.assert((select count(*) from public.list_friends()) = 0, 'anche per l''altro non c''è più amicizia');
+select t.assert((select count(*) from public.list_friends()) = 0, 'anche per l''altro non compare più mentre c''è il blocco');
 select t.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select public.unblock_user('cccccccc-0000-0000-0000-000000000003');
+select t.assert((select count(*) from public.list_friends() where nickname = 'luca') = 1, 'sbloccato: luca ricompare tra gli amici');
+select t.as_user('cccccccc-0000-0000-0000-000000000003');
+select t.assert((select count(*) from public.list_friends() where nickname = 'mario') = 1, 'anche per l''altro l''amicizia è tornata');
+-- richieste in sospeso: nascoste e non accettabili mentre c'è il blocco, di nuovo visibili dopo lo sblocco
+select t.as_admin();
+insert into auth.users(id) values ('eeeeeeee-0000-0000-0000-000000000005');
+insert into public.profiles(id, nickname, gender, avatar) values ('eeeeeeee-0000-0000-0000-000000000005', 'elena', 'f', 'gatto');
+select t.as_user('eeeeeeee-0000-0000-0000-000000000005');
+select public.send_friend_request('aaaaaaaa-0000-0000-0000-000000000001');
+select t.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select public.block_user('eeeeeeee-0000-0000-0000-000000000005');
+select t.assert((select count(*) from public.list_requests()) = 0, 'richiesta di un bloccato: nascosta');
+select t.fails($q$select public.respond_friend_request('eeeeeeee-0000-0000-0000-000000000005', true)$q$, 'non trovata');
+select public.unblock_user('eeeeeeee-0000-0000-0000-000000000005');
+select t.assert((select count(*) from public.list_requests() where direction = 'received') = 1, 'dopo lo sblocco la richiesta ricompare');
+select public.respond_friend_request('eeeeeeee-0000-0000-0000-000000000005', true);
+select t.assert((select count(*) from public.list_friends() where nickname = 'elena') = 1, 'e si può accettare');
 select public.remove_friend('bbbbbbbb-0000-0000-0000-000000000002');
-select t.assert((select count(*) from public.list_friends()) = 0, 'remove_friend rimuove l''amicizia');
+select t.assert((select count(*) from public.list_friends() where nickname = 'marta') = 0, 'remove_friend rimuove l''amicizia');
 
 -- 7. Contatto fidato: solo il proprietario lo vede
 select t.as_user('bbbbbbbb-0000-0000-0000-000000000002');

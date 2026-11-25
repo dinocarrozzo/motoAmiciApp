@@ -36,7 +36,7 @@ describe('validateEmail', () => {
 });
 
 describe('validateRegistration', () => {
-  const good = { email: 'a@b.it', password: '12345678', nickname: 'mario', isAdult: true, acceptedPrivacy: true };
+  const good = { email: 'a@b.it', password: '12345678', nickname: 'mario', isAdult: true, acceptedPrivacy: true, gender: 'm' as const, bikeType: 'naked' as const };
   test('dati corretti → ok, nessun errore', () => {
     expect(validateRegistration(good)).toEqual({ ok: true, errors: {} });
   });
@@ -48,9 +48,18 @@ describe('validateRegistration', () => {
   test('senza informativa → errore sul campo acceptedPrivacy', () => {
     expect(validateRegistration({ ...good, acceptedPrivacy: false }).errors.acceptedPrivacy).toBeTruthy();
   });
+  test('senza aver scelto il sesso → errore sul campo gender', () => {
+    expect(validateRegistration({ ...good, gender: null }).errors.gender).toBeTruthy();
+  });
+  test('«preferisco non dirlo» (x) conta come scelta', () => {
+    expect(validateRegistration({ ...good, gender: 'x' }).ok).toBe(true);
+  });
+  test('senza aver scelto la moto → errore sul campo bikeType', () => {
+    expect(validateRegistration({ ...good, bikeType: null }).errors.bikeType).toBeTruthy();
+  });
   test('più errori insieme, uno per campo', () => {
-    const r = validateRegistration({ email: 'x', password: '1', nickname: 'a', isAdult: false, acceptedPrivacy: false });
-    expect(Object.keys(r.errors).sort()).toEqual(['acceptedPrivacy', 'email', 'isAdult', 'nickname', 'password']);
+    const r = validateRegistration({ email: 'x', password: '1', nickname: 'a', isAdult: false, acceptedPrivacy: false, gender: null, bikeType: null });
+    expect(Object.keys(r.errors).sort()).toEqual(['acceptedPrivacy', 'bikeType', 'email', 'gender', 'isAdult', 'nickname', 'password']);
   });
 });
 

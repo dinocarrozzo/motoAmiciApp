@@ -44,12 +44,21 @@ test('solo spazi nei campi del contatto contano come vuoti', () => {
 test('avatar inesistente → errore', () => {
   expect(validateProfileForm({ ...base, avatar: 'inesistente' }).errors.avatar).toBeTruthy();
 });
-test('sesso non scelto (null) → x, cioè «non indicato»', () => {
-  expect(validateProfileForm({ ...base, gender: null }).value?.profile.gender).toBe('x');
+test('sesso non scelto → errore: va indicato per proseguire', () => {
+  const r = validateProfileForm({ ...base, gender: null });
+  expect(r.ok).toBe(false);
+  expect(r.errors.gender).toBeTruthy();
 });
-test('tipo di moto sconosciuto → errore; assente → null', () => {
+test('«preferisco non dirlo» (x) è una scelta valida', () => {
+  expect(validateProfileForm({ ...base, gender: 'x' }).value?.profile.gender).toBe('x');
+});
+test('tipo di moto non scelto → errore: va indicato per proseguire', () => {
+  const r = validateProfileForm({ ...base, bikeType: null });
+  expect(r.ok).toBe(false);
+  expect(r.errors.bikeType).toBeTruthy();
+});
+test('tipo di moto sconosciuto → errore', () => {
   expect(validateProfileForm({ ...base, bikeType: 'monopattino' as any }).errors.bikeType).toBeTruthy();
-  expect(validateProfileForm({ ...base, bikeType: null }).value?.profile.bikeType).toBeNull();
 });
 test('nickname non valido → errore sul nickname', () => {
   expect(validateProfileForm({ ...base, nickname: 'a b' }).errors.nickname).toBeTruthy();

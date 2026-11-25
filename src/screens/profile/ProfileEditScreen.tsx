@@ -3,34 +3,13 @@ import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'rea
 import { getProfilesApi } from '../../api';
 import { DEFAULT_AVATAR_ID } from '../../profile/avatars';
 import { validateProfileForm, type ProfileForm } from '../../profile/profileForm';
-import type { BikeType, Gender } from '../../profile/types';
-import { Button, colors, Field, Notice, styles } from '../ui';
+import { Button, Field, Notice, styles } from '../ui';
 import { AvatarPicker } from './AvatarPicker';
-
-const GENDERS: { id: Gender; label: string }[] = [
-  { id: 'm', label: 'Uomo' },
-  { id: 'f', label: 'Donna' },
-  { id: 'x', label: 'Preferisco non dirlo' },
-];
-const BIKES: { id: BikeType; label: string }[] = [
-  { id: 'stradale-sportiva', label: 'Stradale sportiva' },
-  { id: 'custom', label: 'Custom' },
-  { id: 'naked', label: 'Naked' },
-  { id: 'enduro', label: 'Enduro' },
-  { id: 'maxienduro', label: 'Maxi enduro' },
-];
+import { GenderAndBike } from './ProfileChoices';
 
 const empty: ProfileForm = {
-  nickname: '', displayName: '', gender: 'x', avatar: DEFAULT_AVATAR_ID, bikeType: null, contactName: '', contactPhone: '',
+  nickname: '', displayName: '', gender: null, avatar: DEFAULT_AVATAR_ID, bikeType: null, contactName: '', contactPhone: '',
 };
-
-function Choice({ selected, label, onPress }: { selected: boolean; label: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity onPress={onPress} style={{ paddingVertical: 8 }}>
-      <Text style={{ fontSize: 16, color: selected ? colors.primary : '#111' }}>{selected ? '◉ ' : '○ '}{label}</Text>
-    </TouchableOpacity>
-  );
-}
 
 export function ProfileEditScreen({ onSaved, onSignOut }: { onSaved: () => void; onSignOut: () => void }) {
   const [form, setForm] = useState<ProfileForm | null>(null);
@@ -50,7 +29,7 @@ export function ProfileEditScreen({ onSaved, onSignOut }: { onSaved: () => void;
           ...empty,
           nickname: p?.nickname ?? '',
           displayName: p?.displayName ?? '',
-          gender: p?.gender ?? 'x',
+          gender: p?.gender ?? null,
           avatar: p?.avatar ?? DEFAULT_AVATAR_ID,
           bikeType: p?.bikeType ?? null,
           contactName: c?.name ?? '',
@@ -107,12 +86,7 @@ export function ProfileEditScreen({ onSaved, onSignOut }: { onSaved: () => void;
       <AvatarPicker value={form.avatar} onChange={(v) => set('avatar', v)} />
       {errors.avatar ? <Text style={styles.error}>{errors.avatar}</Text> : null}
       <View style={{ height: 14 }} />
-      <Text style={styles.label}>Sesso (decide il colore del tuo segnaposto)</Text>
-      {GENDERS.map((g) => <Choice key={g.id} selected={form.gender === g.id} label={g.label} onPress={() => set('gender', g.id)} />)}
-      <View style={{ height: 8 }} />
-      <Text style={styles.label}>Che moto hai?</Text>
-      {BIKES.map((b) => <Choice key={b.id} selected={form.bikeType === b.id} label={b.label} onPress={() => set('bikeType', b.id)} />)}
-      <Choice selected={form.bikeType === null} label="Non lo dico" onPress={() => set('bikeType', null)} />
+      <GenderAndBike gender={form.gender} bikeType={form.bikeType} onGender={(g) => set('gender', g)} onBike={(b) => set('bikeType', b)} errors={errors} />
       <View style={{ height: 12 }} />
       <Text style={styles.label}>Contatto fidato per le emergenze</Text>
       <Text style={styles.subtitle}>Se premi il tasto di emergenza, riceverà un messaggio con la tua posizione. Solo tu vedi questo numero.</Text>

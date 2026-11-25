@@ -1,3 +1,5 @@
+import type { BikeType, Gender } from './types';
+
 type Result = { ok: true; value: string } | { ok: false; error: string };
 
 export function validateNickname(s: string): Result {
@@ -27,8 +29,10 @@ export type RegistrationInput = {
   nickname: string;
   isAdult: boolean;
   acceptedPrivacy: boolean;
+  gender: Gender | null;
+  bikeType: BikeType | null;
 };
-type Field = 'email' | 'password' | 'nickname' | 'isAdult' | 'acceptedPrivacy';
+type Field = 'email' | 'password' | 'nickname' | 'isAdult' | 'acceptedPrivacy' | 'gender' | 'bikeType';
 
 export function validateRegistration(i: RegistrationInput): { ok: boolean; errors: Partial<Record<Field, string>> } {
   const errors: Partial<Record<Field, string>> = {};
@@ -40,6 +44,8 @@ export function validateRegistration(i: RegistrationInput): { ok: boolean; error
   if (!nickname.ok) errors.nickname = nickname.error;
   if (!i.isAdult) errors.isAdult = 'Devi avere almeno 18 anni';
   if (!i.acceptedPrivacy) errors.acceptedPrivacy = "Devi accettare l'informativa";
+  if (!i.gender) errors.gender = "Scegli un'opzione";
+  if (!i.bikeType) errors.bikeType = 'Scegli il tipo di moto';
   return { ok: Object.keys(errors).length === 0, errors };
 }
 

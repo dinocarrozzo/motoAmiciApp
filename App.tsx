@@ -5,6 +5,7 @@ import { ActivityIndicator, Linking, Text, View } from 'react-native';
 import { getAuthApi, getProfilesApi } from './src/api';
 import { parseRecoveryUrl } from './src/auth/recoveryLink';
 import { nextStage } from './src/navigation/stage';
+import { isProfileComplete } from './src/profile/completeness';
 import type { Profile } from './src/profile/types';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
@@ -15,7 +16,7 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { AppTabs } from './src/screens/AppTabs';
 import { FriendsScreen } from './src/screens/friends/FriendsScreen';
 import { ProfileEditScreen } from './src/screens/profile/ProfileEditScreen';
-import { ProfileSetupScreen } from './src/screens/profile/ProfileSetupScreen';
+import { ProfileSetupScreen, type SetupValues } from './src/screens/profile/ProfileSetupScreen';
 import { TrackScreen } from './src/screens/TrackScreen';
 import { Button, Notice, styles as ui } from './src/screens/ui';
 
@@ -100,7 +101,7 @@ export default function App() {
       await auth.signUp(v.email, v.password);
       if (!(await auth.getSession())) throw new Error("Controlla la tua email per confermare l'account, poi accedi");
       try {
-        await getProfilesApi().saveProfile({ nickname: v.nickname, displayName: null, gender: 'x', avatar: v.avatar, bikeType: null });
+        await getProfilesApi().saveProfile({ nickname: v.nickname, displayName: null, gender: v.gender, avatar: v.avatar, bikeType: v.bikeType });
         setNotice(null);
       } catch (e) {
         setNotice(errMsg(e)); // es. nickname già in uso: lo si sceglie di nuovo nella schermata «Completa il profilo»
@@ -112,8 +113,8 @@ export default function App() {
     }
   };
 
-  const saveSetup = async (v: { nickname: string; avatar: string; gender: Profile['gender'] }) => {
-    await getProfilesApi().saveProfile({ nickname: v.nickname, displayName: null, gender: v.gender, avatar: v.avatar, bikeType: null });
+  const saveSetup = async (v: SetupValues) => {
+    await getProfilesApi().saveProfile({ nickname: v.nickname, displayName: profile?.displayName ?? null, gender: v.gender, avatar: v.avatar, bikeType: v.bikeType });
     setNotice(null);
     await loadProfile();
   };
@@ -160,7 +161,7 @@ export default function App() {
       </View>
     );
   } else {
-    const stage = nextStage({ loggedIn, hasProfile: !!profile, permissionsDone });
+    const stage = nextStage({ loggedIn, hasProfile: isProfileComplete(profile), permissionsDone });
     if (stage === 'login') {
       body =
         authScreen === 'register' ? (
@@ -176,7 +177,7 @@ export default function App() {
           />
         );
     } else if (stage === 'profile') {
-      body = <ProfileSetupScreen notice={notice} onSave={saveSetup} onSignOut={signOut} />;
+      body = <ProfileSetupScreen initial={profile ?? null} notice={notice} onSave={saveSetup} onSignOut={signOut} />;
     } else if (stage === 'permissions') {
       body = <PermissionsFlow onDone={finishPermissions} />;
     } else {

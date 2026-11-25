@@ -141,3 +141,7 @@ Decisioni dell'utente:
 - **Codice del prototipo:** resta come base dell'app vera (coda punti, tracciamento, procedura permessi); cambia la schermata di prova.
 
 Da decidere nel pezzo sulla mappa: segnaposto = moto del colore del sesso (proposta, uguale per tutti, perché una forma per tipo di moto rivelerebbe ai free un dato premium) con l'avatar nelle schede, oppure l'avatar sulla mappa.
+
+Correzioni dopo la prima prova sui telefoni (2026-11-25):
+- **Sesso e tipo di moto obbligatori** alla registrazione e per proseguire (nessuna scelta preimpostata). «Preferisco non dirlo» resta una scelta valida per il sesso (segnaposto viola). Chi ha un account senza tipo di moto viene fermato su «Completa il profilo» finché non lo indica.
+- **Blocco reversibile**: bloccare nasconde amicizie e richieste, sbloccare le ripristina (prima le cancellava).

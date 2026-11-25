@@ -2,10 +2,12 @@ import { useRef, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { DEFAULT_AVATAR_ID } from '../../profile/avatars';
 import { validateRegistration } from '../../profile/validation';
+import type { BikeType, Gender } from '../../profile/types';
 import { AvatarPicker } from '../profile/AvatarPicker';
+import { GenderAndBike } from '../profile/ProfileChoices';
 import { Button, Check, Field, Notice, styles } from '../ui';
 
-export type RegisterValues = { email: string; password: string; nickname: string; avatar: string };
+export type RegisterValues = { email: string; password: string; nickname: string; avatar: string; gender: Gender; bikeType: BikeType };
 
 export function RegisterScreen({ onRegister, onBack }: {
   onRegister: (v: RegisterValues) => Promise<void>;
@@ -16,6 +18,8 @@ export function RegisterScreen({ onRegister, onBack }: {
   const [showPassword, setShowPassword] = useState(false);
   const [nickname, setNickname] = useState('');
   const [avatar, setAvatar] = useState(DEFAULT_AVATAR_ID);
+  const [gender, setGender] = useState<Gender | null>(null);
+  const [bikeType, setBikeType] = useState<BikeType | null>(null);
   const [isAdult, setIsAdult] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -25,14 +29,14 @@ export function RegisterScreen({ onRegister, onBack }: {
 
   const submit = async () => {
     if (sending.current) return; // niente doppio tocco
-    const check = validateRegistration({ email, password, nickname, isAdult, acceptedPrivacy });
+    const check = validateRegistration({ email, password, nickname, isAdult, acceptedPrivacy, gender, bikeType });
     setErrors(check.errors as Record<string, string>);
     setServerError(null);
-    if (!check.ok) return;
+    if (!check.ok || !gender || !bikeType) return;
     sending.current = true;
     setBusy(true);
     try {
-      await onRegister({ email, password, nickname: nickname.trim(), avatar });
+      await onRegister({ email, password, nickname: nickname.trim(), avatar, gender, bikeType });
     } catch (e) {
       setServerError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -55,6 +59,8 @@ export function RegisterScreen({ onRegister, onBack }: {
       <Field label="Nickname (come ti vedranno gli altri)" value={nickname} onChangeText={setNickname} autoCapitalize="none" error={errors.nickname} />
       <Text style={styles.label}>Scegli il tuo avatar</Text>
       <AvatarPicker value={avatar} onChange={setAvatar} />
+      <View style={{ height: 14 }} />
+      <GenderAndBike gender={gender} bikeType={bikeType} onGender={setGender} onBike={setBikeType} errors={errors} />
       <View style={{ height: 14 }} />
       <Check checked={isAdult} onToggle={() => setIsAdult((v) => !v)} error={errors.isAdult}>Ho almeno 18 anni</Check>
       <Check checked={acceptedPrivacy} onToggle={() => setAcceptedPrivacy((v) => !v)} error={errors.acceptedPrivacy}>

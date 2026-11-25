@@ -30,7 +30,9 @@ export function validateProfileForm(f: ProfileForm): ProfileFormResult {
   if (displayName.length > 40) errors.displayName = 'Il nome può avere al massimo 40 caratteri';
 
   if (!isValidAvatar(f.avatar)) errors.avatar = 'Scegli un avatar';
-  if (f.bikeType !== null && !BIKE_TYPES.includes(f.bikeType)) errors.bikeType = 'Tipo di moto non valido';
+  if (!f.gender) errors.gender = "Scegli un'opzione";
+  if (f.bikeType === null) errors.bikeType = 'Scegli il tipo di moto';
+  else if (!BIKE_TYPES.includes(f.bikeType)) errors.bikeType = 'Tipo di moto non valido';
 
   const contactName = f.contactName.trim();
   const contactPhone = f.contactPhone.trim();
@@ -46,7 +48,7 @@ export function validateProfileForm(f: ProfileForm): ProfileFormResult {
     }
   }
 
-  if (Object.keys(errors).length > 0 || !nickname.ok) return { ok: false, errors };
+  if (Object.keys(errors).length > 0 || !nickname.ok || !f.gender) return { ok: false, errors };
   return {
     ok: true,
     errors: {},
@@ -54,7 +56,7 @@ export function validateProfileForm(f: ProfileForm): ProfileFormResult {
       profile: {
         nickname: nickname.value,
         displayName: displayName || null,
-        gender: f.gender ?? 'x',
+        gender: f.gender,
         avatar: f.avatar,
         bikeType: f.bikeType,
       },
