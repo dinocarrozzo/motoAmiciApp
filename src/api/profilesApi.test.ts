@@ -3,7 +3,7 @@ import { createProfilesApi, type DbClient } from './profilesApi';
 type Res = { data?: any; error?: { message: string; code?: string } | null };
 
 function fake(opts: { session?: boolean; row?: any; rpc?: Res; upsert?: Res } = {}) {
-  const calls: { upserts: any[]; selects: any[]; rpcs: any[] } = { upserts: [], selects: [], rpcs: [] };
+  const calls: { upserts: any[]; selects: any[]; rpcs: any[]; deletes: any[] } = { upserts: [], selects: [], rpcs: [], deletes: [] };
   const client: DbClient = {
     auth: { getSession: async () => ({ data: { session: opts.session === false ? null : { user: { id: 'me' } } } }) },
     from: (table: string) => ({
@@ -19,6 +19,12 @@ function fake(opts: { session?: boolean; row?: any; rpc?: Res; upsert?: Res } = 
         calls.upserts.push({ table, row });
         return { error: opts.upsert?.error ?? null };
       },
+      delete: () => ({
+        eq: async (col: string, val: string) => {
+          calls.deletes.push({ table, col, val });
+          return { error: null };
+        },
+      }),
     }),
     rpc: async (fn: string, args?: any) => {
       calls.rpcs.push({ fn, args });
@@ -74,4 +80,10 @@ test('contatto fidato: lettura e scrittura sulla tabella giusta', async () => {
 });
 test('contatto fidato assente → null', async () => {
   expect(await createProfilesApi(fake().client).getEmergencyContact()).toBeNull();
+});
+
+test('clearEmergencyContact cancella la riga del proprietario', async () => {
+  const { client, calls } = fake();
+  await createProfilesApi(client).clearEmergencyContact();
+  expect(calls.deletes).toEqual([{ table: 'emergency_contacts', col: 'user_id', val: 'me' }]);
 });

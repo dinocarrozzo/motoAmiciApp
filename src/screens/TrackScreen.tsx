@@ -19,7 +19,7 @@ const WARNINGS: Record<Exclude<TrackerStatus, 'tracking'>, string> = {
   error: 'Impossibile avviare il tracciamento (controlla .env, l\'accesso anonimo di Supabase o la licenza della libreria).',
 };
 
-export function TrackScreen({ nickname, onSignOut }: { nickname: string; onSignOut: () => void }) {
+export function TrackScreen({ nickname }: { nickname: string }) {
   const [status, setStatus] = useState<TrackerStatus | 'idle'>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
@@ -80,11 +80,7 @@ export function TrackScreen({ nickname, onSignOut }: { nickname: string; onSignO
       <TouchableOpacity style={[styles.button, tracking && styles.stop]} onPress={tracking ? stop : start}>
         <Text style={styles.buttonText}>{tracking ? 'Ferma' : 'Avvia'}</Text>
       </TouchableOpacity>
-      {!tracking ? (
-        <TouchableOpacity style={{ padding: 14, alignItems: 'center' }} onPress={onSignOut}>
-          <Text style={{ fontSize: 16, color: '#1d4ed8' }}>Esci dall'account</Text>
-        </TouchableOpacity>
-      ) : null}
+
     </ScrollView>
   );
 }

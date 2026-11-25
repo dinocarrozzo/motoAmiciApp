@@ -10,6 +10,7 @@ export interface DbClient {
       eq(col: string, val: string): { maybeSingle(): PromiseLike<{ data: any | null; error: DbError }> };
     };
     upsert(row: Record<string, unknown>): PromiseLike<{ error: DbError }>;
+    delete(): { eq(col: string, val: string): PromiseLike<{ error: DbError }> };
   };
   rpc(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: any; error: DbError }>;
 }
@@ -73,6 +74,12 @@ export function createProfilesApi(client: DbClient) {
       const { data, error } = await client.from('emergency_contacts').select('name, phone').eq('user_id', id).maybeSingle();
       if (error) throw fail(error);
       return data ? { name: data.name, phone: data.phone } : null;
+    },
+
+    async clearEmergencyContact(): Promise<void> {
+      const id = await myId();
+      const { error } = await client.from('emergency_contacts').delete().eq('user_id', id);
+      if (error) throw fail(error);
     },
 
     async saveEmergencyContact(c: EmergencyContact): Promise<void> {

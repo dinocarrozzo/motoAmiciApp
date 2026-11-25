@@ -10,6 +10,8 @@ import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen, type RegisterValues } from './src/screens/auth/RegisterScreen';
 import { BatterySetupScreen } from './src/screens/BatterySetupScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { AppTabs } from './src/screens/AppTabs';
+import { ProfileEditScreen } from './src/screens/profile/ProfileEditScreen';
 import { ProfileSetupScreen } from './src/screens/profile/ProfileSetupScreen';
 import { TrackScreen } from './src/screens/TrackScreen';
 import { Button, Notice, styles as ui } from './src/screens/ui';
@@ -140,7 +142,14 @@ export default function App() {
     } else if (stage === 'permissions') {
       body = <PermissionsFlow onDone={finishPermissions} />;
     } else {
-      body = <TrackScreen nickname={profile?.nickname ?? ''} onSignOut={signOut} />;
+      body = (
+        <AppTabs
+          tabs={[
+            { id: 'giro', label: 'Giro', icon: '🏍️', render: () => <TrackScreen nickname={profile?.nickname ?? ''} /> },
+            { id: 'profilo', label: 'Profilo', icon: '👤', render: () => <ProfileEditScreen onSaved={loadProfile} onSignOut={signOut} /> },
+          ]}
+        />
+      );
     }
   }
 
