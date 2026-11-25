@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAuthApi, getProfilesApi } from './src/api';
 import { parseRecoveryUrl } from './src/auth/recoveryLink';
 import { nextStage } from './src/navigation/stage';
@@ -33,6 +34,16 @@ function PermissionsFlow({ onDone }: { onDone: () => void }) {
 }
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  // Lo schermo arriva fino in fondo: lasciamo libero lo spazio dei tasti di navigazione del telefono.
+  const insets = useSafeAreaInsets();
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined); // undefined = ancora da leggere
   const [permissionsDone, setPermissionsDone] = useState<boolean | null>(null);
@@ -194,9 +205,9 @@ export default function App() {
   }
 
   return (
-    <>
+    <View style={{ flex: 1, paddingBottom: insets.bottom }}>
       {body}
       <StatusBar style="auto" />
-    </>
+    </View>
   );
 }
