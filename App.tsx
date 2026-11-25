@@ -11,6 +11,7 @@ import { RegisterScreen, type RegisterValues } from './src/screens/auth/Register
 import { BatterySetupScreen } from './src/screens/BatterySetupScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { AppTabs } from './src/screens/AppTabs';
+import { FriendsScreen } from './src/screens/friends/FriendsScreen';
 import { ProfileEditScreen } from './src/screens/profile/ProfileEditScreen';
 import { ProfileSetupScreen } from './src/screens/profile/ProfileSetupScreen';
 import { TrackScreen } from './src/screens/TrackScreen';
@@ -146,6 +147,7 @@ export default function App() {
         <AppTabs
           tabs={[
             { id: 'giro', label: 'Giro', icon: '🏍️', render: () => <TrackScreen nickname={profile?.nickname ?? ''} /> },
+            { id: 'amici', label: 'Amici', icon: '👥', render: () => <FriendsScreen myId={profile!.id} myNickname={profile!.nickname} /> },
             { id: 'profilo', label: 'Profilo', icon: '👤', render: () => <ProfileEditScreen onSaved={loadProfile} onSignOut={signOut} /> },
           ]}
         />
