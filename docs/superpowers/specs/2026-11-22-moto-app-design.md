@@ -130,3 +130,14 @@ Scelta del servizio mappe (Mapbox, Google Maps o MapLibre), frequenza di campion
 
 **Ancora aperte**
 - Disponibilità del nome sugli store prima di fissarlo.
+
+## 10. Aggiornamenti del 2026-11-25 (account, ricerca, avatar)
+
+Decisioni dell'utente:
+- **Accesso:** email e password (min. 8 caratteri), recupero password via email. Conferma email spenta in sviluppo, da riaccendere prima della pubblicazione con un servizio di invio email.
+- **Profilo:** nickname (unico), nome facoltativo, sesso facoltativo, avatar, tipo di moto, contatto fidato per l'emergenza (visibile solo al proprietario).
+- **Ricerca amici:** barra di ricerca con suggerimenti mentre si digita, per nickname o nome (da 2 caratteri, max 10 risultati, solo dati pubblici del profilo). Obiettivo: favorire la socializzazione. Amicizia con richiesta e accettazione; blocco invisibile nei due sensi.
+- **Avatar:** scelto alla registrazione da un catalogo di immagini simpatiche (inizialmente emoji, nessun caricamento di foto).
+- **Codice del prototipo:** resta come base dell'app vera (coda punti, tracciamento, procedura permessi); cambia la schermata di prova.
+
+Da decidere nel pezzo sulla mappa: segnaposto = moto del colore del sesso (proposta, uguale per tutti, perché una forma per tipo di moto rivelerebbe ai free un dato premium) con l'avatar nelle schede, oppure l'avatar sulla mappa.
