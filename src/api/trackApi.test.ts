@@ -10,15 +10,11 @@ const pt = (n: number): TrackPoint => ({
   speed: null,
 });
 
-function fakeClient(opts: { session?: boolean; upsertError?: string; signInError?: string } = {}) {
-  const calls = { upsert: [] as unknown[][], signIn: 0 };
+function fakeClient(opts: { session?: boolean; upsertError?: string } = {}) {
+  const calls = { upsert: [] as unknown[][] };
   const client: TrackClient = {
     auth: {
       getSession: async () => ({ data: { session: opts.session ? {} : null } }),
-      signInAnonymously: async () => {
-        calls.signIn++;
-        return { error: opts.signInError ? { message: opts.signInError } : null };
-      },
     },
     from: (table: string) => ({
       upsert: async (rows: unknown, options: unknown) => {
@@ -62,18 +58,12 @@ test('sendPoints con lista vuota non chiama il server', async () => {
   expect(calls.upsert).toEqual([]);
 });
 
-test('ensureSignedIn non rifà l\'accesso se la sessione esiste', async () => {
-  const { client, calls } = fakeClient({ session: true });
-  await createTrackApi(client).ensureSignedIn();
-  expect(calls.signIn).toBe(0);
+test('ensureSignedIn con una sessione non fa nulla', async () => {
+  const { client } = fakeClient({ session: true });
+  await expect(createTrackApi(client).ensureSignedIn()).resolves.toBeUndefined();
 });
 
-test('ensureSignedIn fa l\'accesso anonimo se manca la sessione e rilancia gli errori', async () => {
-  const ok = fakeClient();
-  await createTrackApi(ok.client).ensureSignedIn();
-  expect(ok.calls.signIn).toBe(1);
-  const ko = fakeClient({ signInError: 'accesso anonimo disattivato' });
-  await expect(createTrackApi(ko.client).ensureSignedIn()).rejects.toThrow(
-    'accesso anonimo disattivato',
-  );
+test('ensureSignedIn senza sessione lancia «Accedi per continuare» (niente accesso anonimo)', async () => {
+  const { client } = fakeClient({ session: false });
+  await expect(createTrackApi(client).ensureSignedIn()).rejects.toThrow('Accedi per continuare');
 });

@@ -1,15 +1,12 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
-import { fetchWithTimeout } from './fetchWithTimeout';
 import type { TrackPoint } from '../tracking/types';
+import { getClient } from './supabaseClient';
 
 type DbError = { message: string } | null;
 
 /** La parte del client Supabase che ci serve (permette un client finto nei test). */
 export interface TrackClient {
   auth: {
-    getSession(): Promise<{ data: { session: unknown | null } }>;
-    signInAnonymously(): Promise<{ error: DbError }>;
+    getSession(): PromiseLike<{ data: { session: unknown | null } }>;
   };
   from(table: string): {
     upsert(
@@ -22,10 +19,9 @@ export interface TrackClient {
 export function createTrackApi(client: TrackClient) {
   return {
     async ensureSignedIn(): Promise<void> {
+      // Serve un utente che ha fatto l'accesso (niente più accesso anonimo): i punti restano in coda e si riprova.
       const { data } = await client.auth.getSession();
-      if (data.session) return;
-      const { error } = await client.auth.signInAnonymously();
-      if (error) throw new Error(error.message);
+      if (!data.session) throw new Error('Accedi per continuare');
     },
 
     async sendPoints(points: TrackPoint[]): Promise<void> {
@@ -49,18 +45,7 @@ export function createTrackApi(client: TrackClient) {
 let defaultApi: ReturnType<typeof createTrackApi> | null = null;
 
 function api() {
-  if (!defaultApi) {
-    const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-    const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) {
-      throw new Error('Mancano EXPO_PUBLIC_SUPABASE_URL o EXPO_PUBLIC_SUPABASE_ANON_KEY nel file .env');
-    }
-    const client = createClient(url, key, {
-      auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true },
-      global: { fetch: fetchWithTimeout(15_000) },
-    });
-    defaultApi = createTrackApi(client as unknown as TrackClient);
-  }
+  if (!defaultApi) defaultApi = createTrackApi(getClient() as unknown as TrackClient);
   return defaultApi;
 }
 
