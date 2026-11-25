@@ -1,3 +1,5 @@
+import { RESET_REDIRECT } from '../auth/recoveryLink';
+
 type AuthError = { message: string; code?: string; status?: number } | null;
 
 /** La parte del client Supabase che ci serve per l'accesso (permette un client finto nei test). */
@@ -6,7 +8,9 @@ export interface AuthClient {
     signUp(c: { email: string; password: string }): PromiseLike<{ data: unknown; error: AuthError }>;
     signInWithPassword(c: { email: string; password: string }): PromiseLike<{ data: unknown; error: AuthError }>;
     signOut(): PromiseLike<{ error: AuthError }>;
-    resetPasswordForEmail(email: string): PromiseLike<{ data: unknown; error: AuthError }>;
+    resetPasswordForEmail(email: string, opts?: { redirectTo?: string }): PromiseLike<{ data: unknown; error: AuthError }>;
+    setSession(s: { access_token: string; refresh_token: string }): PromiseLike<{ data: unknown; error: AuthError }>;
+    updateUser(attrs: { password: string }): PromiseLike<{ data: unknown; error: AuthError }>;
     getSession(): PromiseLike<{ data: { session: unknown | null } }>;
     onAuthStateChange(cb: (event: string, session: unknown | null) => void): {
       data: { subscription: { unsubscribe(): void } };
@@ -46,7 +50,14 @@ export function createAuthApi(client: AuthClient) {
       check((await client.auth.signOut()).error);
     },
     async sendPasswordReset(email: string): Promise<void> {
-      check((await client.auth.resetPasswordForEmail(clean(email))).error);
+      check((await client.auth.resetPasswordForEmail(clean(email), { redirectTo: RESET_REDIRECT })).error);
+    },
+    /** Apre la sessione di recupero con i dati del link ricevuto per email. */
+    async recoverSession(accessToken: string, refreshToken: string): Promise<void> {
+      check((await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })).error);
+    },
+    async updatePassword(newPassword: string): Promise<void> {
+      check((await client.auth.updateUser({ password: newPassword })).error);
     },
     async getSession(): Promise<boolean> {
       return isRealSession((await client.auth.getSession()).data.session);

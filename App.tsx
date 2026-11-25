@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Text, View } from 'react-native';
 import { getAuthApi, getProfilesApi } from './src/api';
+import { parseRecoveryUrl } from './src/auth/recoveryLink';
 import { nextStage } from './src/navigation/stage';
 import type { Profile } from './src/profile/types';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
+import { ResetPasswordScreen } from './src/screens/auth/ResetPasswordScreen';
 import { RegisterScreen, type RegisterValues } from './src/screens/auth/RegisterScreen';
 import { BatterySetupScreen } from './src/screens/BatterySetupScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -36,6 +38,8 @@ export default function App() {
   const [authScreen, setAuthScreen] = useState<'login' | 'register' | 'forgot'>('login');
   const [notice, setNotice] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [recovering, setRecovering] = useState(false); // sta scegliendo una nuova password dopo il link nell'email
+  const [linkNotice, setLinkNotice] = useState<string | null>(null);
   const busyRef = useRef(false); // mentre si registra, ignoriamo gli eventi di accesso per non far lampeggiare le schermate
 
   const loadProfile = useCallback(async () => {
@@ -61,6 +65,28 @@ export default function App() {
       setLoadError(errMsg(e));
     }
   }, []);
+
+  // Link di recupero password ricevuto per email: apre la sessione e mostra «nuova password».
+  const handleUrl = useCallback(async (url: string | null | undefined) => {
+    if (!url) return;
+    const link = parseRecoveryUrl(url);
+    if (!link) return;
+    if (link.kind === 'error') return setLinkNotice(link.message);
+    setRecovering(true); // prima della sessione, così le altre schermate non lampeggiano
+    try {
+      await getAuthApi().recoverSession(link.accessToken, link.refreshToken);
+      setLinkNotice(null);
+    } catch (e) {
+      setRecovering(false);
+      setLinkNotice(`Il link non è più valido: richiedine uno nuovo (${errMsg(e)})`);
+    }
+  }, []);
+
+  useEffect(() => {
+    Linking.getInitialURL().then(handleUrl).catch(() => undefined);
+    const sub = Linking.addEventListener('url', (e) => handleUrl(e.url));
+    return () => sub.remove();
+  }, [handleUrl]);
 
   useEffect(() => {
     if (loggedIn) loadProfile();
@@ -108,7 +134,17 @@ export default function App() {
   };
 
   let body;
-  if (loadError) {
+  if (recovering) {
+    body = (
+      <ResetPasswordScreen
+        onSubmit={(pw) => getAuthApi().updatePassword(pw)}
+        onDone={() => {
+          setRecovering(false);
+          setLinkNotice(null);
+        }}
+      />
+    );
+  } else if (loadError) {
     body = (
       <View style={ui.screen}>
         <Notice text={`Non riesco a collegarmi: ${loadError}`} />
@@ -133,6 +169,7 @@ export default function App() {
           <ForgotPasswordScreen onSend={(e) => getAuthApi().sendPasswordReset(e)} onBack={() => setAuthScreen('login')} />
         ) : (
           <LoginScreen
+            notice={linkNotice}
             onSignIn={(e, p) => getAuthApi().signIn(e, p)}
             onGoRegister={() => setAuthScreen('register')}
             onGoForgot={() => setAuthScreen('forgot')}

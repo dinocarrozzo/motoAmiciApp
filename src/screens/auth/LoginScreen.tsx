@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity } from 'react-native';
 import { Button, Field, Notice, styles } from '../ui';
 
-export function LoginScreen({ onSignIn, onGoRegister, onGoForgot }: {
+export function LoginScreen({ onSignIn, onGoRegister, onGoForgot, notice }: {
+  notice?: string | null;
   onSignIn: (email: string, password: string) => Promise<void>;
   onGoRegister: () => void;
   onGoForgot: () => void;
@@ -32,6 +33,7 @@ export function LoginScreen({ onSignIn, onGoRegister, onGoForgot }: {
     <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>MotoAmici</Text>
       <Text style={styles.subtitle}>Accedi per trovare compagni di giro.</Text>
+      {notice ? <Notice text={notice} /> : null}
       {error ? <Notice text={error} /> : null}
       <Field label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="password" />

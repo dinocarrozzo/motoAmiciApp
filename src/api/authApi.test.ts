@@ -2,7 +2,7 @@ import { createAuthApi, type AuthClient } from './authApi';
 
 type Err = { message: string; code?: string; status?: number } | null;
 
-function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; session?: boolean; anonymous?: boolean } = {}) {
+function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; session?: boolean; anonymous?: boolean; setSession?: Err; update?: Err } = {}) {
   const calls: Record<string, unknown[]> = {};
   const rec = (n: string, a: unknown) => (calls[n] = [...(calls[n] ?? []), a]);
   let listener: ((e: string, s: unknown) => void) | null = null;
@@ -11,7 +11,9 @@ function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; se
       signUp: async (c) => (rec('signUp', c), { data: {}, error: opts.signUp ?? null }),
       signInWithPassword: async (c) => (rec('signIn', c), { data: {}, error: opts.signIn ?? null }),
       signOut: async () => ({ error: opts.signOut ?? null }),
-      resetPasswordForEmail: async (e) => (rec('reset', e), { data: {}, error: opts.reset ?? null }),
+      resetPasswordForEmail: async (e, o) => (rec('reset', e), rec('resetOpts', o), { data: {}, error: opts.reset ?? null }),
+      setSession: async (c) => (rec('setSession', c), { data: {}, error: opts.setSession ?? null }),
+      updateUser: async (a) => (rec('updateUser', a), { data: {}, error: opts.update ?? null }),
       getSession: async () => ({ data: { session: opts.session ? { user: { is_anonymous: opts.anonymous === true } } : null } }),
       onAuthStateChange: (cb) => {
         listener = cb;
@@ -77,4 +79,28 @@ test('onSessionChange: una sessione anonima vale «non connesso»', () => {
   emit('INITIAL_SESSION', { user: { is_anonymous: true } });
   emit('SIGNED_IN', { user: { is_anonymous: false } });
   expect(seen).toEqual([false, true]);
+});
+
+test('sendPasswordReset chiede che il link riporti all\'app', async () => {
+  const { client, calls } = fake();
+  await createAuthApi(client).sendPasswordReset('a@b.it');
+  expect(calls.resetOpts).toEqual([{ redirectTo: 'motoamici://reset-password' }]);
+});
+test('recoverSession passa i token del link a setSession', async () => {
+  const { client, calls } = fake();
+  await createAuthApi(client).recoverSession('AAA', 'RRR');
+  expect(calls.setSession).toEqual([{ access_token: 'AAA', refresh_token: 'RRR' }]);
+});
+test('recoverSession con un link non più valido → errore', async () => {
+  const { client } = fake({ setSession: { message: 'Invalid Refresh Token' } });
+  await expect(createAuthApi(client).recoverSession('AAA', 'RRR')).rejects.toThrow('Invalid Refresh Token');
+});
+test('updatePassword imposta la nuova password', async () => {
+  const { client, calls } = fake();
+  await createAuthApi(client).updatePassword('nuovapassword');
+  expect(calls.updateUser).toEqual([{ password: 'nuovapassword' }]);
+});
+test('updatePassword con password debole → «Password troppo debole»', async () => {
+  const { client } = fake({ update: { message: 'Password should be at least 8 characters', code: 'weak_password' } });
+  await expect(createAuthApi(client).updatePassword('1')).rejects.toThrow('Password troppo debole');
 });

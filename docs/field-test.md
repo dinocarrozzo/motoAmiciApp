@@ -47,3 +47,16 @@ npx tsx scripts/analyze-session.ts <sessione> --battery-start N --battery-end N 
 - Rimossa del tutto la libreria a pagamento (Transistorsoft): all'avvio mostrava «license validation failure» anche col motore gratuito. Resta nella storia di git se servisse. L'esclusione dal risparmio batteria ora apre la finestra di sistema (expo-intent-launcher); Android non permette di sapere se l'utente ha accettato, quindi si ricorda solo che è passato dalla finestra.
 - Rischio per la pubblicazione: Google Play limita l'uso del permesso REQUEST_IGNORE_BATTERY_OPTIMIZATIONS a certe categorie di app. Da verificare con la scheda dello store prima di pubblicare.
 - Samsung, sessione `5326d4aa` (112 min, versione con coda non bloccante e Ferma corretto): 451 punti sul server = 451 inviati nell'app, 0 in attesa; in movimento 93% degli intervalli ≤ 15 s e buco massimo 38 s; i buchi lunghi (9,8 min iniziali, 3,7 min, 2,8 min) iniziano da fermo o quasi fermo. Nessuno stallo, Ferma funziona. Batteria: 37% alle 16:14 → 15% alle 17:36 (circa 16 %/h su 82 min) ma non isolata dal resto (schermo acceso? altre app?): da misurare con «Utilizzo batteria» del telefono.
+
+## Account e amici (prova su due telefoni)
+Serve la build con gli account. Due utenti: A su un telefono, B sull'altro.
+1. **Registrazione**: A si registra (email, password di almeno 8 caratteri, nickname, avatar, spunte 18+ e informativa). Poi la procedura dei permessi. Controlla: se la registrazione va a buon fine entri direttamente nell'app.
+2. **Nickname già preso**: B prova a registrarsi con lo stesso nickname di A (anche con maiuscole diverse): deve comparire «Completa il profilo» con il messaggio, non un blocco.
+3. **Ricerca**: A scrive 2 lettere del nickname di B nella scheda Amici: B deve comparire mentre si scrive. Con una lettera sola non cerca.
+4. **Amicizia**: A tocca «Aggiungi» su B. B vede la richiesta nella scheda Richieste e tocca «Accetta»: entrambi si trovano tra gli Amici.
+5. **Blocco**: A blocca B (conferma). B non trova più A nella ricerca e A non trova B; A vede B in «Bloccati»; B non vede nessun avviso. A sblocca: tornano a trovarsi.
+6. **Contatto fidato**: nel Profilo di A inserisci nome e numero (anche scritto con spazi): salvato in formato +39…; poi svuota i due campi e salva: il contatto viene rimosso.
+7. **Esci e rientra**: Profilo → «Esci dall'account», poi accedi di nuovo. Password sbagliata → «Credenziali non valide».
+8. **Recupero password**: dalla schermata di accesso «Password dimenticata?» → email → tocca il link dal telefono: l'app si apre su «Scegli una nuova password». Attenzione: il servizio email gratuito invia al massimo 2 messaggi l'ora.
+9. **Tracciamento con l'account**: Avvia un giro di qualche minuto, poi Ferma: i punti arrivano (stesso referto di prima).
+10. **Sessione lunga** (da fare quando capita): tracciare per più di 1 ora con l'account attivo; dopo il referto non devono esserci buchi per scadenza della sessione.
