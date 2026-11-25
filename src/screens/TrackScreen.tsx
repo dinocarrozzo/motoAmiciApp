@@ -19,7 +19,7 @@ const WARNINGS: Record<Exclude<TrackerStatus, 'tracking'>, string> = {
   error: 'Impossibile avviare il tracciamento (controlla .env, l\'accesso anonimo di Supabase o la licenza della libreria).',
 };
 
-export function TrackScreen() {
+export function TrackScreen({ nickname, onSignOut }: { nickname: string; onSignOut: () => void }) {
   const [status, setStatus] = useState<TrackerStatus | 'idle'>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
@@ -62,6 +62,7 @@ export function TrackScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>MotoAmici GPS (prova)</Text>
+      {nickname ? <Text style={styles.line}>Ciao, {nickname}</Text> : null}
       {status !== 'idle' && status !== 'tracking' && <Text style={styles.warning}>{WARNINGS[status]}</Text>}
       {status === 'error' && tracker.lastError() && (
         <Text style={styles.warning}>Dettaglio: {tracker.lastError()}</Text>
@@ -79,6 +80,11 @@ export function TrackScreen() {
       <TouchableOpacity style={[styles.button, tracking && styles.stop]} onPress={tracking ? stop : start}>
         <Text style={styles.buttonText}>{tracking ? 'Ferma' : 'Avvia'}</Text>
       </TouchableOpacity>
+      {!tracking ? (
+        <TouchableOpacity style={{ padding: 14, alignItems: 'center' }} onPress={onSignOut}>
+          <Text style={{ fontSize: 16, color: '#1d4ed8' }}>Esci dall'account</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }

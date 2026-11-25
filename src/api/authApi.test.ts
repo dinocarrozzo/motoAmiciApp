@@ -2,7 +2,7 @@ import { createAuthApi, type AuthClient } from './authApi';
 
 type Err = { message: string; code?: string; status?: number } | null;
 
-function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; session?: boolean } = {}) {
+function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; session?: boolean; anonymous?: boolean } = {}) {
   const calls: Record<string, unknown[]> = {};
   const rec = (n: string, a: unknown) => (calls[n] = [...(calls[n] ?? []), a]);
   let listener: ((e: string, s: unknown) => void) | null = null;
@@ -12,7 +12,7 @@ function fake(opts: { signUp?: Err; signIn?: Err; reset?: Err; signOut?: Err; se
       signInWithPassword: async (c) => (rec('signIn', c), { data: {}, error: opts.signIn ?? null }),
       signOut: async () => ({ error: opts.signOut ?? null }),
       resetPasswordForEmail: async (e) => (rec('reset', e), { data: {}, error: opts.reset ?? null }),
-      getSession: async () => ({ data: { session: opts.session ? {} : null } }),
+      getSession: async () => ({ data: { session: opts.session ? { user: { is_anonymous: opts.anonymous === true } } : null } }),
       onAuthStateChange: (cb) => {
         listener = cb;
         return { data: { subscription: { unsubscribe: () => rec('unsub', 1) } } };
@@ -65,4 +65,16 @@ test('onSessionChange inoltra true/false e restituisce la funzione per disiscriv
 test('signOut con errore lo rilancia', async () => {
   const { client } = fake({ signOut: { message: 'rete assente' } });
   await expect(createAuthApi(client).signOut()).rejects.toThrow('rete assente');
+});
+
+test('una sessione anonima delle versioni di prova non conta come accesso', async () => {
+  expect(await createAuthApi(fake({ session: true, anonymous: true }).client).getSession()).toBe(false);
+});
+test('onSessionChange: una sessione anonima vale «non connesso»', () => {
+  const { client, emit } = fake();
+  const seen: boolean[] = [];
+  createAuthApi(client).onSessionChange((v) => seen.push(v));
+  emit('INITIAL_SESSION', { user: { is_anonymous: true } });
+  emit('SIGNED_IN', { user: { is_anonymous: false } });
+  expect(seen).toEqual([false, true]);
 });

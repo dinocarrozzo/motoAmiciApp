@@ -28,6 +28,9 @@ function friendly(e: NonNullable<AuthError>): Error {
 
 const clean = (email: string) => email.trim().toLowerCase();
 
+/** Le versioni di prova usavano un accesso anonimo: quella sessione non è un account vero. */
+const isRealSession = (s: unknown): boolean => s !== null && s !== undefined && !(s as { user?: { is_anonymous?: boolean } }).user?.is_anonymous;
+
 export function createAuthApi(client: AuthClient) {
   const check = (error: AuthError) => {
     if (error) throw friendly(error);
@@ -46,10 +49,10 @@ export function createAuthApi(client: AuthClient) {
       check((await client.auth.resetPasswordForEmail(clean(email))).error);
     },
     async getSession(): Promise<boolean> {
-      return (await client.auth.getSession()).data.session !== null;
+      return isRealSession((await client.auth.getSession()).data.session);
     },
     onSessionChange(cb: (loggedIn: boolean) => void): () => void {
-      const { data } = client.auth.onAuthStateChange((_event, session) => cb(session !== null));
+      const { data } = client.auth.onAuthStateChange((_event, session) => cb(isRealSession(session)));
       return () => data.subscription.unsubscribe();
     },
   };
