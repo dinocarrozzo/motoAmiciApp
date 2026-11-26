@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, AppState, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Linking, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { getFriendsApi } from '../../api';
+import { createRefreshLoop } from '../../friends/refreshLoop';
 import { relationshipWith } from '../../friends/relationship';
 import { APP_DOWNLOAD_LINK, buildInviteMessage, whatsappUrl } from '../../friends/invite';
 import type { Block, Friendship, ProfileSummary } from '../../profile/types';
@@ -12,13 +13,18 @@ import { SmallButton } from './SmallButton';
 type Lists = { friends: ProfileSummary[]; received: ProfileSummary[]; sent: ProfileSummary[]; blocked: ProfileSummary[] };
 type Section = 'friends' | 'requests' | 'blocked';
 
-export function FriendsScreen({ myId, myNickname }: { myId: string; myNickname: string }) {
+/** Ogni quanto si aggiornano amici e richieste mentre la scheda è aperta. */
+const REFRESH_EVERY_MS = 20_000;
+
+export function FriendsScreen({ myId, myNickname, active }: { myId: string; myNickname: string; active: boolean }) {
   const [lists, setLists] = useState<Lists>({ friends: [], received: [], sent: [], blocked: [] });
   const [section, setSection] = useState<Section>('friends');
   const [suggestions, setSuggestions] = useState<ProfileSummary[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pulling, setPulling] = useState(false);
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
 
   const refresh = useCallback(async () => {
     try {
@@ -31,11 +37,22 @@ export function FriendsScreen({ myId, myNickname }: { myId: string; myNickname: 
     }
   }, []);
 
+  // Aggiornamento automatico: solo con la scheda visibile e l'app aperta (niente consumo in background).
   useEffect(() => {
-    refresh();
-    const sub = AppState.addEventListener('change', (st) => st === 'active' && refresh());
+    const sub = AppState.addEventListener('change', (st) => setAppActive(st === 'active'));
     return () => sub.remove();
-  }, [refresh]);
+  }, []);
+  const loop = useMemo(() => createRefreshLoop({ refresh, intervalMs: REFRESH_EVERY_MS }), [refresh]);
+  useEffect(() => () => loop.dispose(), [loop]);
+  useEffect(() => {
+    loop.setActive(active && appActive);
+  }, [loop, active, appActive]);
+
+  const onPull = async () => {
+    setPulling(true);
+    await refresh();
+    setPulling(false);
+  };
 
   // Per mostrare lo stato giusto accanto a ogni suggerimento.
   const { friendships, blocks } = useMemo(() => {
@@ -97,7 +114,11 @@ export function FriendsScreen({ myId, myNickname }: { myId: string; myNickname: 
   ];
 
   return (
-    <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={styles.screen}
+      keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} />}
+    >
       <Text style={styles.title}>Amici</Text>
       {error ? <Notice text={error} /> : null}
       <SearchBar onResults={setSuggestions} onActive={setSearching} />

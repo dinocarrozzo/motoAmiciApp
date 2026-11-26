@@ -196,7 +196,7 @@ function AppContent() {
         <AppTabs
           tabs={[
             { id: 'giro', label: 'Giro', icon: '🏍️', render: () => <TrackScreen nickname={profile?.nickname ?? ''} /> },
-            { id: 'amici', label: 'Amici', icon: '👥', render: () => <FriendsScreen myId={profile!.id} myNickname={profile!.nickname} /> },
+            { id: 'amici', label: 'Amici', icon: '👥', render: (isActive) => <FriendsScreen myId={profile!.id} myNickname={profile!.nickname} active={isActive} /> },
             { id: 'profilo', label: 'Profilo', icon: '👤', render: () => <ProfileEditScreen onSaved={loadProfile} onSignOut={signOut} /> },
           ]}
         />

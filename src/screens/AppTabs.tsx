@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from './ui';
 
-export type TabDef = { id: string; label: string; icon: string; render: () => ReactNode };
+export type TabDef = { id: string; label: string; icon: string; render: (isActive: boolean) => ReactNode };
 
 /** Barra di schede semplice in basso. Le schede non selezionate restano montate, così il giro in corso non si perde. */
 export function AppTabs({ tabs }: { tabs: TabDef[] }) {
@@ -17,7 +17,7 @@ export function AppTabs({ tabs }: { tabs: TabDef[] }) {
       <View style={{ flex: 1 }}>
         {tabs.map((t) =>
           visited.includes(t.id) ? (
-            <View key={t.id} style={{ flex: 1, display: t.id === active ? 'flex' : 'none' }}>{t.render()}</View>
+            <View key={t.id} style={{ flex: 1, display: t.id === active ? 'flex' : 'none' }}>{t.render(t.id === active)}</View>
           ) : null,
         )}
       </View>
