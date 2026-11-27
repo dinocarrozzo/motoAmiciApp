@@ -54,6 +54,10 @@ select t.as_user('a4000000-0000-0000-0000-000000000001');
 select t.assert((select count(distinct (lat, lng)) from public.riders_in_area(45.4, 9.1, 45.5, 9.3)) = 1, 'B e C nella stessa cella hanno le stesse coordinate approssimate');
 select t.assert((select count(*) from public.riders_in_area(45.4, 9.1, 45.5, 9.3)) = 2, 'A vede B e C');
 
+-- 2b. Sondaggio con zone minuscole: un non amico non deve poter risalire alla posizione esatta
+select t.assert((select count(*) from public.riders_in_area(45.4601, 9.1901, 45.4602, 9.1902)) = 0, 'zona minuscola attorno alla posizione vera: un non amico non risulta');
+select t.assert((select count(*) from public.riders_in_area(45.4610, 9.1900, 45.4615, 9.1910)) >= 1, 'la zona attorno al centro della cella lo trova');
+
 -- 3. Dati premium: A premium li vede, D free no
 select t.assert((select ride_type from public.riders_in_area(45.4, 9.1, 45.5, 9.3) where nickname = 'bruno4') = 'passeggiata-veloce', 'premium vede il tipo di uscita');
 select t.assert((select destination from public.riders_in_area(45.4, 9.1, 45.5, 9.3) where nickname = 'bruno4') = 'Lago di Como', 'premium vede la destinazione');
@@ -66,6 +70,7 @@ select t.assert((select count(*) from public.riders_in_area(45.4, 9.1, 45.5, 9.3
 select t.as_admin();
 insert into public.friendships(requester, addressee, status) values ('b4000000-0000-0000-0000-000000000002', 'd4000000-0000-0000-0000-000000000004', 'accepted');
 select t.as_user('d4000000-0000-0000-0000-000000000004');
+select t.assert((select count(*) from public.riders_in_area(45.4601, 9.1901, 45.4602, 9.1902)) = 1, 'un amico si trova anche con una zona minuscola');
 select t.assert((select exact from public.riders_in_area(45.4, 9.1, 45.5, 9.3) where nickname = 'bruno4') = true, 'amico: esatto');
 select t.assert((select lat from public.riders_in_area(45.4, 9.1, 45.5, 9.3) where nickname = 'bruno4') = 45.46012, 'amico: coordinate vere');
 select t.assert((select is_friend from public.riders_in_area(45.4, 9.1, 45.5, 9.3) where nickname = 'bruno4') = true, 'is_friend vero');
@@ -166,9 +171,9 @@ insert into public.rides(id, user_id, ride_type, visibility)
   select ('78000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid, ('77000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid, 'enduro', 'all' from generate_series(1, 101) g;
 insert into public.live_positions(user_id, ride_id, lat, lng, recorded_at)
   select ('77000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid, ('78000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid,
-         45.0 + g * 0.002, 9.0, now() from generate_series(1, 101) g;
+         45.001 + g * 0.0045, 9.0, now() from generate_series(1, 101) g;
 select t.as_user('a4000000-0000-0000-0000-000000000001');
-select t.assert((select count(*) from public.riders_in_area(45.0, 8.9, 45.3, 9.1)) = 100, 'massimo 100 righe');
-select t.assert((select count(*) from public.riders_in_area(45.0, 8.9, 45.3, 9.1) where nickname = 'folla1') = 0, 'esclusa la più lontana dal centro (folla1 è la più a sud)');
+select t.assert((select count(*) from public.riders_in_area(45.0, 8.9, 45.5, 9.1)) = 100, 'massimo 100 righe');
+select t.assert((select count(*) from public.riders_in_area(45.0, 8.9, 45.5, 9.1) where nickname = 'folla1') = 0, 'esclusa la più lontana dal centro (folla1 è la più a sud)');
 
 select 'TUTTE LE VERIFICHE SONO PASSATE' as esito;
