@@ -44,6 +44,10 @@ export function createRideController(deps: {
       await deps.tracker.stop();
       if (id) await endQuietly(id);
     },
+    /** Dopo un riavvio dell'app con il tracciamento ancora attivo: riprende il giro in corso. */
+    resume(id: string): void {
+      current = id;
+    },
     currentRideId: () => current,
   };
 }

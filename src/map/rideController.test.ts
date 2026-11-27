@@ -75,3 +75,9 @@ test('stop senza giro o ripetuto non richiama endRide', async () => {
   await c.stop();
   expect(log.filter((l) => l.startsWith('endRide'))).toEqual(['endRide:R1']);
 });
+test('resume: dopo un riavvio, stop chiude il giro ripreso', async () => {
+  const { c, log } = setup();
+  c.resume('OLD');
+  await c.stop();
+  expect(log).toEqual(['trackStop', 'endRide:OLD']);
+});

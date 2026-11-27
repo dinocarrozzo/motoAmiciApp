@@ -18,7 +18,7 @@ import { AppTabs } from './src/screens/AppTabs';
 import { FriendsScreen } from './src/screens/friends/FriendsScreen';
 import { ProfileEditScreen } from './src/screens/profile/ProfileEditScreen';
 import { ProfileSetupScreen, type SetupValues } from './src/screens/profile/ProfileSetupScreen';
-import { TrackScreen } from './src/screens/TrackScreen';
+import { MapScreen } from './src/screens/map/MapScreen';
 import { Button, Notice, styles as ui } from './src/screens/ui';
 
 const SETUP_DONE_KEY = 'motoamici.setupDone';
@@ -195,7 +195,7 @@ function AppContent() {
       body = (
         <AppTabs
           tabs={[
-            { id: 'giro', label: 'Giro', icon: '🏍️', render: () => <TrackScreen nickname={profile?.nickname ?? ''} /> },
+            { id: 'mappa', label: 'Mappa', icon: '🗺️', render: (isActive) => <MapScreen active={isActive} /> },
             { id: 'amici', label: 'Amici', icon: '👥', render: (isActive) => <FriendsScreen myId={profile!.id} myNickname={profile!.nickname} active={isActive} /> },
             { id: 'profilo', label: 'Profilo', icon: '👤', render: () => <ProfileEditScreen onSaved={loadProfile} onSignOut={signOut} /> },
           ]}
