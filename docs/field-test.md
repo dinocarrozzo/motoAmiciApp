@@ -64,3 +64,18 @@ Serve la build con gli account. Due utenti: A su un telefono, B sull'altro.
 - Prima prova su Xiaomi (25/11): registrazione con email o nickname già usati → errore chiaro; ricerca con suggerimenti, richiesta, blocco: ok. Trovati due difetti, corretti: (1) sesso e tipo di moto non erano obbligatori; (2) sbloccando un amico spariva dall'elenco (il blocco cancellava l'amicizia). Il passo 1 della prova diventa: **non si può proseguire senza scegliere sesso e moto**, e gli account già creati senza moto vedono «Completa il profilo».
 - Segnalazione dell'utente (25/11): la barra delle schede in basso era in parte coperta dai tasti di navigazione di Android (l'app disegna fino in fondo allo schermo). Corretto lasciando libero lo spazio dei tasti del telefono (react-native-safe-area-context). Da controllare sul telefono, con i tasti a tre pulsanti e con i gesti.
 - Prova del 26/11: tutto superato tranne un difetto: quando il destinatario accettava una richiesta, il mittente continuava a vedere «In attesa» finché non riapriva l'app (l'elenco si aggiornava solo all'apertura). Corretto: la scheda Amici si aggiorna da sola ogni 20 secondi mentre è visibile e l'app è aperta (niente aggiornamenti in background), più «trascina per aggiornare». Da controllare: A manda la richiesta, B accetta, A deve vedere B tra gli Amici entro circa 20 secondi senza fare niente.
+
+## Mappa in tempo reale (prova su due telefoni)
+Serve la build con la mappa. Utenti: A (Samsung) e B (Xiaomi), già registrati, **non ancora amici** all'inizio.
+Il premium non c'è ancora come acquisto: lo assegno io a mano a un account (dimmi il nickname).
+1. **Mappa visibile**: apri la scheda Mappa su entrambi. Compare la mappa (se resta bianca o c'è un avviso rosso, dimmelo: vuol dire che il servizio gratuito dei tasselli non funziona e passiamo a Google). Se avevi dato il permesso di posizione, c'è il punto blu e la mappa si centra su di te.
+2. **Vedere senza condividere**: B non parte. A tocca «Parti per un giro», sceglie il tipo di uscita (senza scelta non si parte), lascia «Tutti», destinazione a piacere, e parte. B, restando sulla Mappa, entro circa 10 secondi vede una moto sul punto di A; toccandola vede il nickname e «Posizione approssimata (circa 500 m)».
+3. **Approssimazione**: A cammina/si muove di poche decine di metri: il segnaposto sulla mappa di B resta fermo finché A non cambia «quadratino» di circa 500 m.
+4. **Colori**: il segnaposto è azzurro per un uomo, rosa per una donna, viola per chi non indica il sesso.
+5. **Dati del giro**: B (free) toccando A vede solo nickname e la frase sui dati Premium. Dopo che assegno il premium a B (e B riapre la mappa), vede tipo di uscita, moto e destinazione di A.
+6. **Amici**: A e B diventano amici. B ora vede A nel punto esatto, con il tag «amico».
+7. **Solo amici**: A ferma il giro e riparte con «Solo i miei amici»: un terzo utente non amico non lo vede, B sì.
+8. **Blocco**: A blocca B: A sparisce dalla mappa di B (e viceversa), senza avvisi. Sbloccando torna.
+9. **Ferma**: A tocca «Ferma il giro»: entro ~10 s sparisce dalla mappa di B. Se invece A chiude l'app o perde la rete, sparisce dopo 2 minuti.
+10. **Mappa chiusa**: B passa a un'altra scheda o blocca lo schermo: non arriva niente (risparmio batteria); tornando sulla Mappa si aggiorna subito. A continua a condividere con la mappa chiusa e a schermo bloccato.
+11. **Permesso di posizione negato**: la mappa si vede lo stesso senza punto blu; «Parti» mostra le istruzioni per il permesso.
