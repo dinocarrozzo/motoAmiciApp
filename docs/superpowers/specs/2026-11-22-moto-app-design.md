@@ -151,3 +151,9 @@ Correzioni dopo la prima prova sui telefoni (2026-11-25):
 Decisioni dell'utente: per vedere gli altri non serve condividere la propria posizione; la mappa riceve le posizioni degli altri solo quando è aperta (ogni ~10 s), mentre la propria condivisione continua in background; mappa gratuita (MapLibre + OpenFreeMap), con passaggio a Google se non idonea.
 
 Regole decise dal server: non amici in posizione approssimata (cella ~500 m), amici esatta; bloccati invisibili nei due sensi; «Solo amici» visto solo dagli amici; tipo di uscita, moto e destinazione solo ai premium; sparisce chi non aggiorna da 2 minuti o preme Ferma. Piano: `docs/superpowers/plans/2026-11-27-mappa-tempo-reale.md`.
+
+## 11. Link di invito che apre l'app o lo store (nota dell'utente, 2026-11-27)
+
+Oggi l'invito WhatsApp contiene solo il testo (`APP_DOWNLOAD_LINK` è vuoto). Voluto: un unico link di invito che, toccato, **apre l'app se è installata, altrimenti porta allo store**.
+Come: pagina web su un dominio nostro (es. `…/invito/<codice>`) + collegamenti universali (Android App Links con `assetlinks.json`, iOS Universal Links con `apple-app-site-association`) + `intent-filter` nell'app; la pagina, se l'app non c'è, rimanda a Play Store / App Store. Facoltativo: dopo l'installazione, riaprire sull'invito (deferred deep link).
+Richiede: un dominio, le schede sugli store (quindi l'app pubblicata) e un account sviluppatore Apple per iPhone. Fino alla pubblicazione la pagina può offrire il download dell'APK.
