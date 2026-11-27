@@ -28,3 +28,10 @@ export type RideSettings = {
   visibility: Visibility;
   destination: string | null;
 };
+
+/** Vista iniziale: circa 100 km di raggio attorno a te (zoom 7); senza posizione, l'Italia intera. */
+export const START_ZOOM = 7;
+export const RECENTER_ZOOM = 11;
+export const FALLBACK_VIEW = { center: [12.5, 42.0] as [number, number], zoom: 5 };
+export const MIN_ZOOM = 3;
+export const MAX_ZOOM = 17;
