@@ -39,7 +39,8 @@
           "isAndroidForegroundServiceEnabled": true,
           "locationAlwaysAndWhenInUsePermission": "MotoAmici usa la posizione anche a schermo bloccato per condividere il giro."
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "extra": {
       "eas": {
