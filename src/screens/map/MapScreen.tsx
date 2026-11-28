@@ -9,6 +9,7 @@ import { createGroupState, fetchAllGroupState, type GroupSnapshot } from '../../
 import { sameRiders } from '../../map/geojson';
 import { createRidersFeed } from '../../map/useRiders';
 import { REFRESH_RIDERS_MS, type Rider } from '../../map/types';
+import { useKeyboardHeight } from '../useKeyboardHeight';
 import { AcceptSheet, type MeetChoice } from './AcceptSheet';
 import { MapLegend } from './MapLegend';
 import { RiderCard } from './RiderCard';
@@ -47,6 +48,7 @@ export function MapScreen({ active, nickname }: { active: boolean; nickname: str
   const [recenter, setRecenter] = useState<{ at: LngLat; n: number } | null>(null);
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const looked = useRef(false);
+  const kb = useKeyboardHeight();
   const [snapshot, setSnapshot] = useState<GroupSnapshot>(EMPTY);
   const [accepting, setAccepting] = useState<IncomingRequest | null>(null);
   const [picking, setPicking] = useState(false);
@@ -188,7 +190,7 @@ export function MapScreen({ active, nickname }: { active: boolean; nickname: str
           <TouchableOpacity onPress={() => setPicking(false)}><Text style={{ color: '#1d4ed8' }}>Annulla</Text></TouchableOpacity>
         </View>
       ) : null}
-      <View style={s.bottom}>
+      <View style={[s.bottom, kb > 0 && { bottom: Math.max(0, kb - 60) }]}>
         {selected ? (
           <View style={s.cardWrap}>
             <RiderCard

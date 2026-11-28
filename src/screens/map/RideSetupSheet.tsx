@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import { validateRideSetup } from '../../map/rideSetup';
 import type { RideSettings, RideType, Visibility } from '../../map/types';
 import { Choice } from '../profile/ProfileChoices';
-import { Button, Field, styles } from '../ui';
+import { Button, Field, SheetScroll, styles } from '../ui';
 
 const TYPES: { id: RideType; label: string }[] = [
   { id: 'passeggiata', label: 'Passeggiata' },
@@ -30,7 +30,7 @@ export function RideSetupSheet({ visible, busy, onCancel, onConfirm }: {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 50, gap: 8 }} keyboardShouldPersistTaps="handled">
+      <SheetScroll>
         <Text style={{ fontSize: 22, fontWeight: '700' }}>Parti per un giro</Text>
         <Text style={styles.label}>Che uscita fai? *</Text>
         {TYPES.map((t) => <Choice key={t.id} selected={rideType === t.id} label={t.label} onPress={() => setRideType(t.id)} />)}
@@ -47,7 +47,7 @@ export function RideSetupSheet({ visible, busy, onCancel, onConfirm }: {
         <TouchableOpacity onPress={onCancel} style={{ alignItems: 'center', padding: 12 }}>
           <Text style={{ color: '#475569', fontSize: 16 }}>Annulla</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </SheetScroll>
     </Modal>
   );
 }

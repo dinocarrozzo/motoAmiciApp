@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Modal, Text, TouchableOpacity } from 'react-native';
 import type { IncomingRequest, MeetPoint } from '../../groups/types';
 import { Choice } from '../profile/ProfileChoices';
-import { Button, Field, Notice } from '../ui';
+import { Button, Field, Notice, SheetScroll } from '../ui';
 
 export type MeetChoice = 'none' | 'here' | 'map';
 
@@ -22,7 +22,7 @@ export function AcceptSheet({ request, picked, busy, error, onCancel, onPickOnMa
 
   return (
     <Modal visible={request !== null} animationType="slide" onRequestClose={onCancel}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 8 }} keyboardShouldPersistTaps="handled">
+      <SheetScroll>
         <Text style={{ fontSize: 22, fontWeight: '700' }}>Accetta {request?.nickname}</Text>
         <Text style={{ color: '#555' }}>Dove ci si incontra? (facoltativo)</Text>
         <Choice selected={effective === 'none'} label="Nessun punto" onPress={() => setChoice('none')} />
@@ -38,7 +38,7 @@ export function AcceptSheet({ request, picked, busy, error, onCancel, onPickOnMa
         <TouchableOpacity onPress={onCancel} style={{ alignItems: 'center', padding: 12 }}>
           <Text style={{ color: '#475569', fontSize: 16 }}>Annulla</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </SheetScroll>
     </Modal>
   );
 }

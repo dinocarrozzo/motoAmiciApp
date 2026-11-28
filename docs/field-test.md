@@ -93,3 +93,4 @@ Serve la build con i gruppi. Ruoli: **A** (Samsung) crea il giro; **B** (Xiaomi)
 8. **Prima risposta**: A e B (membri) rispondono insieme a una richiesta di C: vale la prima, l'altro vede «Richiesta già gestita».
 9. **Blocchi**: A blocca C dalla scheda Amici: C non trova più il gruppo di A, non può entrare con il codice, e le richieste non arrivano.
 10. **Uscita**: il creatore tocca «Ferma il giro»: il ruolo di guida passa a chi resta; quando l'ultimo ferma, il codice non vale più.
+- Prova del 28/11 (gruppi, 2 contatti): tutto funziona. Difetto: aprendo la tastiera per scrivere la destinazione, il campo restava coperto (del tutto su Samsung, in parte su Xiaomi). Corretto: le schermate con campi di testo (partenza del giro, accettazione, codice) lasciano spazio sotto alla tastiera e scorrono fino al campo; il pannello in basso della Mappa si alza sopra la tastiera. Da riverificare su entrambi i telefoni, anche con il messaggio nella scheda «Chiedi di unirti».

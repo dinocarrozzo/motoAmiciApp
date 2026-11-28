@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { ComponentRef, ReactNode, useEffect, useRef } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { useKeyboardHeight } from './useKeyboardHeight';
 
 export const colors = { primary: '#1d4ed8', danger: '#b91c1c', ok: '#15803d', muted: '#555', border: '#cbd5e1' };
 
@@ -49,6 +50,20 @@ export function Check({ checked, onToggle, children, error }: {
       </TouchableOpacity>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
+  );
+}
+
+/** Pagina a scorrimento che si lascia spazio sotto quando la tastiera è aperta, così i campi restano visibili. */
+export function SheetScroll({ children }: { children: ReactNode }) {
+  const kb = useKeyboardHeight();
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (kb > 0) setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 150);
+  }, [kb]);
+  return (
+    <ScrollView ref={ref} contentContainerStyle={{ padding: 20, paddingTop: 50, gap: 8, paddingBottom: 40 + kb }} keyboardShouldPersistTaps="handled">
+      {children}
+    </ScrollView>
   );
 }
 
