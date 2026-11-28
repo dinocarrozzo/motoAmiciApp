@@ -21,6 +21,8 @@ export type Rider = {
   rideType: RideType | null;
   bikeType: BikeType | null;
   destination: string | null;
+  groupId: string | null;
+  memberCount: number | null;
 };
 
 export type RideSettings = {

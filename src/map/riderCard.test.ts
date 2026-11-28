@@ -3,7 +3,7 @@ import type { Rider } from './types';
 
 const base: Rider = {
   id: '1', nickname: 'Marco', avatar: 'moto', gender: 'm', lat: 45, lng: 9, exact: true, isFriend: true,
-  recordedAt: 1_000_000, rideType: null, bikeType: null, destination: null,
+  recordedAt: 1_000_000, rideType: null, bikeType: null, destination: null, groupId: null, memberCount: null,
 };
 
 test('colori', () => {

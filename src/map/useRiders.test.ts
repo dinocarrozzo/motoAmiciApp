@@ -2,7 +2,7 @@ import { createRidersFeed } from './useRiders';
 import type { BBox, Rider } from './types';
 
 const box = (lat: number, lng: number, size = 0.2): BBox => ({ minLat: lat, minLng: lng, maxLat: lat + size, maxLng: lng + size });
-const rider = (id: string): Rider => ({ id, nickname: id, avatar: 'moto', gender: 'm', lat: 1, lng: 1, exact: true, isFriend: false, recordedAt: 0, rideType: null, bikeType: null, destination: null });
+const rider = (id: string): Rider => ({ id, nickname: id, avatar: 'moto', gender: 'm', lat: 1, lng: 1, exact: true, isFriend: false, recordedAt: 0, rideType: null, bikeType: null, destination: null, groupId: null, memberCount: null });
 
 function deferred<T>() {
   let resolve!: (v: T) => void; let reject!: (e: Error) => void;

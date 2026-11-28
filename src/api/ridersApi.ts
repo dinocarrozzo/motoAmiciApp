@@ -1,5 +1,5 @@
 import { clampBox } from '../map/bbox';
-import type { BBox, RideSettings, Rider } from '../map/types';
+import type { BBox, RideSettings, RideType, Rider } from '../map/types';
 import type { RpcClient } from './friendsApi';
 
 const toRider = (r: any): Rider => ({
@@ -15,6 +15,8 @@ const toRider = (r: any): Rider => ({
   rideType: r.ride_type ?? null,
   bikeType: r.bike_type ?? null,
   destination: r.destination ?? null,
+  groupId: r.group_id ?? null,
+  memberCount: r.member_count ?? null,
 });
 
 export function createRidersApi(client: RpcClient) {
@@ -24,12 +26,14 @@ export function createRidersApi(client: RpcClient) {
     return Array.isArray(data) ? data : [];
   }
   return {
-    async startRide(id: string, s: RideSettings): Promise<void> {
+    /** Dentro un gruppo (`groupId`) il tipo di uscita e la destinazione sono quelli del gruppo. */
+    async startRide(id: string, s: Omit<RideSettings, 'rideType'> & { rideType: RideType | null }, groupId?: string): Promise<void> {
       await call('start_ride', {
         p_ride_id: id,
         p_ride_type: s.rideType,
         p_visibility: s.visibility,
         p_destination: s.destination,
+        ...(groupId ? { p_group_id: groupId } : {}),
       });
     },
     async endRide(id: string): Promise<void> {
