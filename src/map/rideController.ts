@@ -1,10 +1,13 @@
 import type { TrackerStatus } from '../tracking/tracker';
-import type { RideSettings } from './types';
+import type { RideSettings, RideType } from './types';
+
+/** Dentro un gruppo il tipo di uscita è quello del gruppo, quindi può mancare. */
+export type StartSettings = Omit<RideSettings, 'rideType'> & { rideType: RideType | null };
 
 const END_TIMEOUT_MS = 5000;
 
 export function createRideController(deps: {
-  api: { startRide(id: string, s: RideSettings): Promise<void>; endRide(id: string): Promise<void> };
+  api: { startRide(id: string, s: StartSettings, groupId?: string): Promise<void>; endRide(id: string): Promise<void> };
   tracker: { start(sessionId: string): Promise<TrackerStatus>; stop(): Promise<void> };
   newId: () => string;
 }) {
@@ -21,9 +24,10 @@ export function createRideController(deps: {
   }
 
   return {
-    async start(s: RideSettings): Promise<{ status: TrackerStatus; rideId: string | null }> {
+    async start(s: StartSettings, groupId?: string): Promise<{ status: TrackerStatus; rideId: string | null }> {
       const id = deps.newId();
-      await deps.api.startRide(id, s);
+      if (groupId) await deps.api.startRide(id, s, groupId);
+      else await deps.api.startRide(id, s);
       let status: TrackerStatus;
       try {
         status = await deps.tracker.start(id);

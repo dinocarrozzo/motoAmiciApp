@@ -11,7 +11,7 @@ export function uuidv4(): string {
 
 export const rideController = createRideController({
   api: {
-    startRide: (id, s) => getRidersApi().startRide(id, s),
+    startRide: (id, s, groupId) => getRidersApi().startRide(id, s, groupId),
     endRide: (id) => getRidersApi().endRide(id),
   },
   tracker,

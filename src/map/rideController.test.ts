@@ -6,7 +6,7 @@ const settings = { rideType: 'enduro' as const, visibility: 'all' as const, dest
 function setup(opts: { status?: TrackerStatus; startFails?: boolean; endFails?: boolean; endHangs?: boolean } = {}) {
   const log: string[] = [];
   const api = {
-    startRide: async (id: string) => { log.push(`startRide:${id}`); if (opts.startFails) throw new Error('rete'); },
+    startRide: async (id: string, _s?: unknown, groupId?: string) => { log.push(`startRide:${id}${groupId ? `:${groupId}` : ''}`); if (opts.startFails) throw new Error('rete'); },
     endRide: (id: string) => {
       log.push(`endRide:${id}`);
       if (opts.endHangs) return new Promise<void>(() => {});
@@ -80,4 +80,14 @@ test('resume: dopo un riavvio, stop chiude il giro ripreso', async () => {
   c.resume('OLD');
   await c.stop();
   expect(log).toEqual(['trackStop', 'endRide:OLD']);
+});
+test('start dentro un gruppo passa il gruppo', async () => {
+  const { c, log } = setup();
+  await c.start({ rideType: null, visibility: 'all', destination: null }, 'g1');
+  expect(log[0]).toBe('startRide:R1:g1');
+});
+test('start senza gruppo: nessun terzo argomento', async () => {
+  const { c, log } = setup();
+  await c.start(settings);
+  expect(log[0]).toBe('startRide:R1');
 });
