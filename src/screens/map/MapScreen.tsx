@@ -1,11 +1,15 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getRidersApi } from '../../api';
+import { getGroupsApi, getRidersApi } from '../../api';
 import { createRefreshLoop } from '../../friends/refreshLoop';
+import { isMeetPointFresh } from '../../groups/meetPoint';
+import type { IncomingRequest, MeetPoint } from '../../groups/types';
+import { createGroupState, fetchAllGroupState, type GroupSnapshot } from '../../groups/useGroupState';
 import { sameRiders } from '../../map/geojson';
 import { createRidersFeed } from '../../map/useRiders';
 import { REFRESH_RIDERS_MS, type Rider } from '../../map/types';
+import { AcceptSheet, type MeetChoice } from './AcceptSheet';
 import { MapLegend } from './MapLegend';
 import { RiderCard } from './RiderCard';
 import { RidersMap } from './RidersMap';
@@ -31,7 +35,9 @@ async function findMe(): Promise<LngLat | null> {
 }
 
 /** Mappa a schermo intero: vedi gli altri senza dover condividere la tua posizione. */
-export function MapScreen({ active }: { active: boolean }) {
+const EMPTY: GroupSnapshot = { group: null, incoming: [], mine: [], invites: [] };
+
+export function MapScreen({ active, nickname }: { active: boolean; nickname: string }) {
   const [riders, setRiders] = useState<Rider[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +47,12 @@ export function MapScreen({ active }: { active: boolean }) {
   const [recenter, setRecenter] = useState<{ at: LngLat; n: number } | null>(null);
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const looked = useRef(false);
+  const [snapshot, setSnapshot] = useState<GroupSnapshot>(EMPTY);
+  const [accepting, setAccepting] = useState<IncomingRequest | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<MeetPoint>(null);
+  const [acceptBusy, setAcceptBusy] = useState(false);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
 
   const feed = useMemo(
     () =>
@@ -54,8 +66,15 @@ export function MapScreen({ active }: { active: boolean }) {
       }),
     [],
   );
-  const loop = useMemo(() => createRefreshLoop({ refresh: () => feed.refresh(), intervalMs: REFRESH_RIDERS_MS }), [feed]);
-  useEffect(() => () => { loop.dispose(); feed.dispose(); }, [loop, feed]);
+  const groupState = useMemo(
+    () => createGroupState({ fetchAll: () => fetchAllGroupState(getGroupsApi()), onSnapshot: setSnapshot }),
+    [],
+  );
+  const refreshAll = useCallback(async () => {
+    await Promise.all([feed.refresh(), groupState.refresh()]);
+  }, [feed, groupState]);
+  const loop = useMemo(() => createRefreshLoop({ refresh: refreshAll, intervalMs: REFRESH_RIDERS_MS }), [refreshAll]);
+  useEffect(() => () => { loop.dispose(); feed.dispose(); groupState.dispose(); }, [loop, feed, groupState]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => setAppActive(st === 'active'));
@@ -87,6 +106,48 @@ export function MapScreen({ active }: { active: boolean }) {
   };
 
   const onBounds = useCallback((b: Parameters<typeof feed.setBox>[0]) => feed.setBox(b), [feed]);
+  const now = Date.now();
+
+  const onAccept = (r: IncomingRequest) => {
+    setAcceptError(null);
+    setPicked(null);
+    setAccepting(r);
+  };
+  const closeAccept = () => {
+    setAccepting(null);
+    setPicking(false);
+    setPicked(null);
+    setAcceptError(null);
+  };
+  const confirmAccept = async (choice: MeetChoice, note: string | null) => {
+    if (!accepting) return;
+    setAcceptBusy(true);
+    setAcceptError(null);
+    try {
+      let meet: MeetPoint = null;
+      if (choice === 'map') meet = picked;
+      if (choice === 'here') {
+        const me = await findMe();
+        if (!me) throw new Error('Non riesco a trovare la tua posizione. Scegli un altro modo.');
+        meet = { lat: me[1], lng: me[0] };
+      }
+      await getGroupsApi().respond(accepting.requestId, true, meet, note);
+      closeAccept();
+      await refreshAll();
+    } catch (e) {
+      setAcceptError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAcceptBusy(false);
+    }
+  };
+
+  // Punto d'incontro da mostrare: quello che sto scegliendo, altrimenti l'ultimo di una mia richiesta accettata.
+  const meetPoint = useMemo<[number, number] | null>(() => {
+    if (picked) return [picked.lng, picked.lat];
+    const m = snapshot.mine.find((r) => r.status === 'accepted' && r.meet && isMeetPointFresh(r.answeredAt, now));
+    return m?.meet ? [m.meet.lng, m.meet.lat] : null;
+  }, [picked, snapshot.mine]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const selected = useMemo(() => riders.find((r) => r.id === selectedId) ?? null, [riders, selectedId]);
 
   return (
@@ -99,6 +160,8 @@ export function MapScreen({ active }: { active: boolean }) {
           showUser={showUser}
           start={start}
           recenter={recenter}
+          meetPoint={meetPoint}
+          onMapPress={picking ? ([lng, lat]) => { setPicked({ lat, lng }); setPicking(false); } : undefined}
           onMapError={() => setError('Non riesco a caricare la mappa. Controlla la connessione.')}
         />
       ) : (
@@ -119,14 +182,35 @@ export function MapScreen({ active }: { active: boolean }) {
           <View style={s.targetDot} />
         </View>
       </TouchableOpacity>
+      {picking ? (
+        <View style={s.picking}>
+          <Text style={{ fontWeight: '700' }}>Tocca la mappa per scegliere il punto d'incontro</Text>
+          <TouchableOpacity onPress={() => setPicking(false)}><Text style={{ color: '#1d4ed8' }}>Annulla</Text></TouchableOpacity>
+        </View>
+      ) : null}
       <View style={s.bottom}>
         {selected ? (
           <View style={s.cardWrap}>
-            <RiderCard rider={selected} onClose={() => setSelectedId(null)} />
+            <RiderCard
+              rider={selected}
+              myGroup={snapshot.group}
+              mine={snapshot.mine}
+              onClose={() => setSelectedId(null)}
+              onChanged={() => void refreshAll()}
+            />
           </View>
         ) : null}
-        <TrackPanel />
+        <TrackPanel snapshot={snapshot} nickname={nickname} now={now} onAccept={onAccept} onChanged={() => void refreshAll()} />
       </View>
+      <AcceptSheet
+        request={picking ? null : accepting}
+        picked={picked}
+        busy={acceptBusy}
+        error={acceptError}
+        onCancel={closeAccept}
+        onPickOnMap={() => setPicking(true)}
+        onConfirm={confirmAccept}
+      />
     </View>
   );
 }
@@ -143,6 +227,7 @@ const s = StyleSheet.create({
   },
   target: { width: 22, height: 22, borderRadius: 11, borderWidth: 2.5, borderColor: '#1d4ed8', alignItems: 'center', justifyContent: 'center' },
   targetDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1d4ed8' },
+  picking: { position: 'absolute', top: 50, left: 16, right: 16, backgroundColor: 'white', padding: 12, borderRadius: 10, elevation: 6, gap: 4 },
   cardWrap: { marginHorizontal: 12, marginBottom: 8 },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
 });

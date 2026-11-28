@@ -80,3 +80,16 @@ Il premium non c'è ancora come acquisto: lo assegno io a mano a un account (dim
 10. **Mappa chiusa**: B passa a un'altra scheda o blocca lo schermo: non arriva niente (risparmio batteria); tornando sulla Mappa si aggiorna subito. A continua a condividere con la mappa chiusa e a schermo bloccato.
 11. **Permesso di posizione negato**: la mappa si vede lo stesso senza punto blu; «Parti» mostra le istruzioni per il permesso.
 - Prova del 27/11 (mappa): la mappa si carica. Segnalati e corretti: (1) partiva dall'Italia intera → ora si apre su circa 100 km di raggio attorno a te; (2) tag «amico» illeggibile → tolto, resta il cerchio giallo, con legenda dei colori; (3) mancava il pallino per ricentrarsi; (4) toccando un segnaposto non succedeva nulla → i motociclisti ora sono cerchi su una sorgente dati della mappa (tocco più affidabile) e la scheda con il nome compare sopra il pannello; (5) dopo uno zoom molto stretto non si riusciva ad allargare → vista iniziale fissa (non più ricreata a ogni aggiornamento), niente ridisegni se l'elenco non cambia, zoom limitato tra 3 e 17. Da riverificare sul telefono, soprattutto il tocco e lo zoom.
+
+## Gruppi, richieste e inviti (prova a tre account)
+Serve la build con i gruppi. Ruoli: **A** (Samsung) crea il giro; **B** (Xiaomi) è l'estraneo che chiede di unirsi (premium: dimmi il nickname e lo assegno); **C** è un terzo account (anche solo per i passi 3 e 6: si può ripetere con A e B a ruoli invertiti).
+1. **Codice**: A tocca «Parti per un giro», sceglie il tipo di uscita e parte. Nel pannello compaiono «Il tuo gruppo: 1 persona · codice XXXXXX» e i bottoni «Invita su WhatsApp» / «Invita un amico». Il messaggio WhatsApp contiene link e codice (il link non apre ancora l'app: è normale, arriva con il piano B).
+2. **Richiesta**: B tocca l'icona di A sulla mappa: vede nickname e (se premium) uscita, destinazione e partecipanti; senza premium solo il nickname e la frase sul Premium. «Chiedi di unirti» (con messaggio facoltativo) → «Richiesta inviata».
+3. **Risposta**: entro ~10 secondi A vede «B vuole unirsi al giro» con Accetta / Rifiuta. Accetta → scegli «La mia posizione», «Scegli sulla mappa» (tocca un punto) o «Nessun punto», aggiungi una nota. B vede «Richiesta accettata!», la nota e il punto verde sulla mappa, e «Parti con il gruppo».
+4. **Gruppo**: B parte con il gruppo: il pannello di A mostra 2 persone; sulla mappa si vedono esatti. Se B apre la scheda di A vede «È il tuo gruppo».
+5. **Rifiuto**: C chiede ad A e A rifiuta: C vede il messaggio e per un'ora non può riprovare (la scheda dice «Potrai riprovare tra N minuti»).
+6. **Codice a mano**: C tocca «Ho un codice» e scrive il codice di A (anche in minuscolo, con spazi): entra nel gruppo e può partire con il gruppo. Un codice sbagliato dà un messaggio chiaro.
+7. **Invito a un amico**: A tocca «Invita un amico», sceglie un amico dell'app: l'amico vede l'invito nel pannello con «Entra».
+8. **Prima risposta**: A e B (membri) rispondono insieme a una richiesta di C: vale la prima, l'altro vede «Richiesta già gestita».
+9. **Blocchi**: A blocca C dalla scheda Amici: C non trova più il gruppo di A, non può entrare con il codice, e le richieste non arrivano.
+10. **Uscita**: il creatore tocca «Ferma il giro»: il ruolo di guida passa a chi resta; quando l'ultimo ferma, il codice non vale più.

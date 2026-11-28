@@ -195,7 +195,7 @@ function AppContent() {
       body = (
         <AppTabs
           tabs={[
-            { id: 'mappa', label: 'Mappa', icon: '🗺️', render: (isActive) => <MapScreen active={isActive} /> },
+            { id: 'mappa', label: 'Mappa', icon: '🗺️', render: (isActive) => <MapScreen active={isActive} nickname={profile?.nickname ?? ''} /> },
             { id: 'amici', label: 'Amici', icon: '👥', render: (isActive) => <FriendsScreen myId={profile!.id} myNickname={profile!.nickname} active={isActive} /> },
             { id: 'profilo', label: 'Profilo', icon: '👤', render: () => <ProfileEditScreen onSaved={loadProfile} onSignOut={signOut} /> },
           ]}
