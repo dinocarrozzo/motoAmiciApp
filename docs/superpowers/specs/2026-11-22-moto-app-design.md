@@ -69,7 +69,7 @@ Gli inviti su WhatsApp sono aperti ai free perché fanno conoscere l'app. Funzio
 - Tasto protetto da pressioni accidentali (tenuto premuto 3 secondi, conto alla rovescia annullabile).
 - Manda un allarme con posizione esatta, nome e moto a chi condivide il giro e al contatto fidato scelto in anticipo.
 - Il contatto fidato di solito non ha l'app: l'allarme parte dal server come SMS (servizio a pagamento, pochi centesimi per allarme).
-- Offre anche "Chiama 112" in un tocco. Il testo dell'app non promette l'intervento dei soccorsi.
+- **Niente chiamata al 112** nell'app (decisione dell'utente, 2026-11-28): l'allarme va solo agli amici del giro e, se impostato, al contatto fidato. Il testo dell'app non promette l'intervento dei soccorsi.
 
 ## 4. Approcci considerati
 
