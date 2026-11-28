@@ -56,18 +56,19 @@ Posizione: gli estranei vedono i membri approssimati (500 m); **i membri dello s
 **Modello**
 - Ogni giro nasce già dentro un gruppo, anche da solo (gruppo di 1): così una richiesta ha sempre un gruppo a cui andare. *(mia scelta)*
 - `ride_groups`: id, tipo di uscita, destinazione, chi l'ha creato, codice d'invito, inizio/fine. Tipo e destinazione sono del gruppo, non di ogni giro.
-- `group_members`: gruppo, persona, stato (`invited`, `active`, `left`), ruolo (`owner`, `member`). Massimo **10 membri attivi** *(mia scelta)*.
+- `group_members`: gruppo, persona, stato (`invited`, `active`, `left`), ruolo (`owner`, `member`). **Nessun limite al numero di membri** (decisione dell'utente: giri grandi ed eventi con decine e decine di partecipanti).
 - Ogni giro (`rides`) ha un `group_id`. La visibilità «Tutti / Solo amici» resta per persona.
 - `join_requests`: gruppo, richiedente, stato (`pending`, `accepted`, `declined`, `cancelled`), messaggio breve, chi ha risposto, punto d'incontro (lat/lng) e nota facoltativi.
 - `notifications`: destinatario, tipo (`join_request`, `join_answer`, `group_invite`), contenuto, letto/non letto. È la fonte che l'app legge; il push è solo il campanello.
 - `push_tokens`: persona, token, piattaforma.
 
 **Regole (tutte nel database, non aggirabili)**
-- *Richiedere:* serve poter già vedere almeno un membro attivo del gruppo (stesse regole di `riders_in_area`: bloccati, «Solo amici»); nessun blocco in nessun verso con alcun membro attivo; non già membro; **una sola richiesta in attesa per gruppo e al massimo 5 in attesa in tutto**; dopo un rifiuto, **un'ora di attesa** per riprovare sullo stesso gruppo *(mie soglie)*.
-- *Rispondere:* qualunque membro attivo; **vale la prima risposta** (la seconda riceve «Richiesta già gestita»). Accettando: il richiedente diventa membro attivo (controllo del limite di 10 e dei blocchi); il punto d'incontro e la nota arrivano a lui in un avviso.
-- *Invitare:* (a) link per WhatsApp con un codice del gruppo, valido finché il gruppo è attivo; chi lo apre diventa membro attivo se non ci sono blocchi e c'è posto; (b) invito in app a un amico, che compare come avviso da accettare. Può invitare qualunque membro attivo.
+- *Richiedere:* serve poter già vedere almeno un membro attivo del gruppo (stesse regole di `riders_in_area`: bloccati, «Solo amici»); nessun blocco in nessun verso con alcun membro attivo; non già membro; **una sola richiesta in attesa per gruppo** (nessun limite sul numero di gruppi diversi, decisione dell'utente); dopo un rifiuto, **un'ora di attesa** per riprovare sullo stesso gruppo; un tetto altissimo contro i programmi automatici (60 richieste all'ora per persona), che un utente vero non raggiunge *(mie soglie)*.
+- *Rispondere:* qualunque membro attivo; **vale la prima risposta** (la seconda riceve «Richiesta già gestita»). Accettando: il richiedente diventa membro attivo (con controllo dei blocchi); il punto d'incontro e la nota arrivano a lui in un avviso.
+- *Invitare:* (a) link per WhatsApp con un codice del gruppo, valido finché il gruppo è attivo; chi lo apre diventa membro attivo se non ci sono blocchi; (b) invito in app a un amico, che compare come avviso da accettare. Può invitare qualunque membro attivo.
 - *Giro nel gruppo:* un membro attivo avvia il proprio giro legato al gruppo (tipo e destinazione ereditati). Chi chiude il giro esce dal gruppo; quando l'ultimo giro finisce, il gruppo termina. Se esce chi l'ha creato, il ruolo passa al membro attivo più anziano.
-- *Mappa:* `riders_in_area` restituisce anche `group_id`; ai soli premium restituisce l'elenco dei partecipanti (nickname, avatar, sesso) oltre a tipo e destinazione; ai membri dello stesso gruppo restituisce la posizione esatta.
+- *Mappa:* `riders_in_area` restituisce anche `group_id` e il numero di partecipanti; ai soli premium restituisce tipo e destinazione; ai membri dello stesso gruppo restituisce la posizione esatta. **L'elenco dei partecipanti non viaggia con la mappa** (con gruppi grandi peserebbe moltissimo): si chiede a parte quando si tocca un'icona, con una funzione riservata ai premium che lo restituisce a pagine di 50 nomi.
+- *Avvisi nei gruppi grandi:* una richiesta non deve far suonare 80 telefoni. Fino a 15 membri il push arriva a tutti; oltre, arriva a chi ha creato il gruppo e ai 5 membri più anziani, mentre tutti gli altri membri la trovano comunque nell'elenco avvisi dell'app. *(mia scelta)*
 - *Avvisi:* ogni evento scrive un avviso e, di conseguenza, invia un push tramite il servizio di notifiche di Expo, chiamato dal database. Quando uno risponde, gli avvisi di richiesta degli altri membri risultano risolti.
 
 **Invito WhatsApp senza app**
@@ -92,8 +93,12 @@ Testi degli avvisi, grafica delle schede e del pannello, struttura precisa delle
 
 ## 8. Cose decise da me, da controllare
 
-Gruppo di 1 al posto di «giro senza gruppo»; massimo 10 membri; una sola richiesta in attesa per gruppo, 5 in totale, un'ora di attesa dopo un rifiuto; la prima risposta vince; uscire dal giro = uscire dal gruppo; passaggio del ruolo di creatore; niente espulsione e niente chat in app; punto d'incontro e nota cancellati dopo 24 ore; link d'invito valido finché il gruppo è attivo e inoltrabile (chi lo riceve può girarlo ad altri: il limite dei 10 membri e i blocchi lo contengono).
+Gruppo di 1 al posto di «giro senza gruppo»; **nessun limite ai membri né alle richieste in attesa (su richiesta dell'utente)**; una sola richiesta in attesa per gruppo, un'ora di attesa dopo un rifiuto, tetto di 60 richieste all'ora contro i programmi automatici; push a tutti fino a 15 membri, oltre solo al creatore e ai 5 più anziani; elenco partecipanti chiesto a parte e a pagine; la prima risposta vince; uscire dal giro = uscire dal gruppo; passaggio del ruolo di creatore; niente espulsione e niente chat in app; punto d'incontro e nota cancellati dopo 24 ore; link d'invito valido finché il gruppo è attivo e inoltrabile (chi lo riceve può girarlo ad altri: i blocchi lo contengono).
 
-## 9. Fuori da questo passo, già segnalato
+## 9. Eventi molto grandi
+
+La mappa mostra al massimo le 100 persone più vicine al centro della zona. Per un evento con centinaia di moto nello stesso punto servirà raggrupparle (un'icona con un numero) e fare altre verifiche di carico: **non in questo passo**, ma il modello non lo impedisce. Il costo del database crescerà con gli utenti collegati contemporaneamente: da rivedere prima di un lancio grande.
+
+## 10. Fuori da questo passo, già segnalato
 
 Emergenza; acquisto dell'abbonamento; cancellazione dell'account; testi legali e pagine del sito; limite di richieste alla mappa; email di sistema.
