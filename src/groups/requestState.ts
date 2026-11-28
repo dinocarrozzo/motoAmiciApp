@@ -1,4 +1,5 @@
-import type { GroupInvite, IncomingRequest, MyRequest } from './types';
+import { isMeetPointFresh } from './meetPoint';
+import type { GroupInvite, IncomingRequest, MyGroup, MyRequest } from './types';
 
 const HOUR = 3_600_000;
 
@@ -22,3 +23,15 @@ export function requestStateFor(groupId: string, myGroupId: string | null, mine:
 /** Numero sul pulsante degli avvisi. `answered` = risposte alle mie richieste non ancora viste. */
 export const badgeCount = (s: { incoming: IncomingRequest[]; invites: GroupInvite[]; answered: MyRequest[] }): number =>
   s.incoming.length + s.invites.length + s.answered.length;
+
+/**
+ * Risposte alle mie richieste da mostrare: recenti (24 ore), non ancora viste.
+ * Un'accettazione resta visibile solo finché sono nel gruppo e non ho ancora avviato il giro con quel gruppo.
+ */
+export function visibleAnswers(mine: MyRequest[], group: Pick<MyGroup, 'groupId' | 'rideId'> | null, now: number, seen: string[]): MyRequest[] {
+  return mine.filter((r) => {
+    if ((r.status !== 'accepted' && r.status !== 'declined') || seen.includes(r.requestId) || !isMeetPointFresh(r.answeredAt, now)) return false;
+    if (r.status === 'declined') return true;
+    return group !== null && group.groupId === r.groupId && group.rideId === null;
+  });
+}

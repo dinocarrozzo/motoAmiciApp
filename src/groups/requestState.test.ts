@@ -1,4 +1,4 @@
-import { requestStateFor, badgeCount } from './requestState';
+import { requestStateFor, badgeCount, visibleAnswers } from './requestState';
 import type { MyRequest } from './types';
 
 const NOW = 1_000_000_000_000;
@@ -25,4 +25,23 @@ test('annullata o di un altro gruppo → can-request', () => {
 });
 test('badgeCount somma le tre liste', () => {
   expect(badgeCount({ incoming: [{} as any, {} as any], invites: [{} as any], answered: [req({}), req({}), req({})] })).toBe(6);
+});
+
+const G = (o: object) => ({ groupId: 'g', rideId: null, ...o }) as any;
+test('visibleAnswers: accettata e sono nel gruppo, non ancora in giro → visibile', () => {
+  const a = req({ status: 'accepted', answeredAt: NOW - 1000 });
+  expect(visibleAnswers([a], G({}), NOW, [])).toEqual([a]);
+});
+test('visibleAnswers: accettata ma sono già in giro nel gruppo → nascosta', () => {
+  expect(visibleAnswers([req({ status: 'accepted', answeredAt: NOW - 1000 })], G({ rideId: 'r' }), NOW, [])).toEqual([]);
+});
+test('visibleAnswers: accettata ma il gruppo non c\'è più → nascosta', () => {
+  expect(visibleAnswers([req({ status: 'accepted', answeredAt: NOW - 1000 })], null, NOW, [])).toEqual([]);
+});
+test('visibleAnswers: rifiutata recente visibile; già vista o vecchia no; pending mai', () => {
+  const d = req({ requestId: 'd', status: 'declined', answeredAt: NOW - 1000 });
+  expect(visibleAnswers([d], null, NOW, [])).toEqual([d]);
+  expect(visibleAnswers([d], null, NOW, ['d'])).toEqual([]);
+  expect(visibleAnswers([req({ status: 'declined', answeredAt: NOW - 25 * 3_600_000 })], null, NOW, [])).toEqual([]);
+  expect(visibleAnswers([req({})], null, NOW, [])).toEqual([]);
 });

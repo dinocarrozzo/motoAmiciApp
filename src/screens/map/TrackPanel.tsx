@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getGroupsApi } from '../../api';
 import type { GroupSnapshot } from '../../groups/useGroupState';
-import { isMeetPointFresh } from '../../groups/meetPoint';
-import type { IncomingRequest, MyRequest } from '../../groups/types';
+import { visibleAnswers } from '../../groups/requestState';
+import type { IncomingRequest } from '../../groups/types';
 import { rideController } from '../../map/defaultRide';
 import type { RideSettings } from '../../map/types';
 import { buffer, stats, tracker } from '../../tracking/defaultTracker';
@@ -100,9 +100,7 @@ export function TrackPanel({ snapshot, nickname, now, onAccept, onChanged }: {
 
   const group = snapshot.group;
   const tracking = status === 'tracking' || (status === 'foreground-only' && rideController.currentRideId() !== null) || (group?.rideId ?? null) !== null;
-  const answered: MyRequest[] = snapshot.mine.filter(
-    (r) => (r.status === 'accepted' || r.status === 'declined') && isMeetPointFresh(r.answeredAt, now) && !seen.includes(r.requestId),
-  );
+  const answered = visibleAnswers(snapshot.mine, group, now, seen);
 
   return (
     <ScrollView style={s.panel} contentContainerStyle={{ gap: 8 }} keyboardShouldPersistTaps="handled">
