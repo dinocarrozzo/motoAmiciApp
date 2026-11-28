@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getGroupsApi } from '../../api';
 import type { GroupSnapshot } from '../../groups/useGroupState';
+import { mapsDirectionsUrl } from '../../groups/meetPoint';
 import { visibleAnswers } from '../../groups/requestState';
 import type { IncomingRequest } from '../../groups/types';
 import { rideController } from '../../map/defaultRide';
@@ -122,6 +123,9 @@ export function TrackPanel({ snapshot, nickname, now, onAccept, onChanged }: {
             <>
               <Text style={{ fontWeight: '700' }}>Richiesta accettata!{r.meetNote ? ` ${r.meetNote}` : ''}</Text>
               {r.meet ? <Text>Il punto d'incontro è segnato in verde sulla mappa.</Text> : null}
+              {r.meet ? (
+                <Button title="Indicazioni con Google Maps" variant="secondary" onPress={() => Linking.openURL(mapsDirectionsUrl(r.meet!)).catch(() => undefined)} />
+              ) : null}
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}><Button title="Parti con il gruppo" onPress={() => startWithGroup(r.groupId)} busy={busy} /></View>
                 <View style={{ flex: 1 }}><Button title="Dopo" variant="secondary" onPress={() => setSeen((x) => [...x, r.requestId])} /></View>

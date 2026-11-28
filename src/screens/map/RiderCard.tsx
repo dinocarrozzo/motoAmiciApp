@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getGroupsApi } from '../../api';
+import { mapsDirectionsUrl } from '../../groups/meetPoint';
 import { requestStateFor } from '../../groups/requestState';
 import type { MyGroup, MyRequest, Participant } from '../../groups/types';
 import { describeRider, markerColor } from '../../map/riderCard';
@@ -89,6 +90,13 @@ export function RiderCard({ rider, myGroup, mine, onClose, onChanged, now = Date
       ) : null}
       {state?.kind === 'wait' ? <Text style={s.info}>Richiesta rifiutata. Potrai riprovare tra {state.waitMinutes} minuti.</Text> : null}
       {state?.kind === 'member' ? <Text style={s.info}>È il tuo gruppo.</Text> : null}
+      {rider.exact ? (
+        <Button
+          title="Indicazioni con Google Maps"
+          variant="secondary"
+          onPress={() => Linking.openURL(mapsDirectionsUrl({ lat: rider.lat, lng: rider.lng })).catch(() => undefined)}
+        />
+      ) : null}
     </View>
   );
 }

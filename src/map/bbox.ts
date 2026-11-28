@@ -29,3 +29,8 @@ export function movedEnough(prev: BBox | null, next: BBox): boolean {
   if (pw === 0 || ph === 0) return true;
   return Math.abs(nw - pw) / pw > 0.3 || Math.abs(nh - ph) / ph > 0.3;
 }
+
+export const bboxCenter = (b: BBox): { lat: number; lng: number } => ({
+  lat: (b.minLat + b.maxLat) / 2,
+  lng: (b.minLng + b.maxLng) / 2,
+});

@@ -6,11 +6,13 @@ import { createRefreshLoop } from '../../friends/refreshLoop';
 import { isMeetPointFresh } from '../../groups/meetPoint';
 import type { IncomingRequest, MeetPoint } from '../../groups/types';
 import { createGroupState, fetchAllGroupState, type GroupSnapshot } from '../../groups/useGroupState';
+import { bboxCenter } from '../../map/bbox';
 import { sameRiders } from '../../map/geojson';
 import { createRidersFeed } from '../../map/useRiders';
-import { REFRESH_RIDERS_MS, type Rider } from '../../map/types';
+import { REFRESH_RIDERS_MS, type BBox, type Rider } from '../../map/types';
 import { useKeyboardHeight } from '../useKeyboardHeight';
 import { AcceptSheet, type MeetChoice } from './AcceptSheet';
+import { Button } from '../ui';
 import { MapLegend } from './MapLegend';
 import { RiderCard } from './RiderCard';
 import { RidersMap } from './RidersMap';
@@ -49,6 +51,7 @@ export function MapScreen({ active, nickname }: { active: boolean; nickname: str
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const looked = useRef(false);
   const kb = useKeyboardHeight();
+  const lastBox = useRef<BBox | null>(null);
   const [snapshot, setSnapshot] = useState<GroupSnapshot>(EMPTY);
   const [accepting, setAccepting] = useState<IncomingRequest | null>(null);
   const [picking, setPicking] = useState(false);
@@ -107,7 +110,15 @@ export function MapScreen({ active, nickname }: { active: boolean; nickname: str
     }
   };
 
-  const onBounds = useCallback((b: Parameters<typeof feed.setBox>[0]) => feed.setBox(b), [feed]);
+  const onBounds = useCallback((b: BBox) => {
+    lastBox.current = b;
+    feed.setBox(b);
+  }, [feed]);
+  const pickCenterAsMeetPoint = () => {
+    if (!lastBox.current) return;
+    setPicked(bboxCenter(lastBox.current));
+    setPicking(false);
+  };
   const now = Date.now();
 
   const onAccept = (r: IncomingRequest) => {
@@ -171,26 +182,40 @@ export function MapScreen({ active, nickname }: { active: boolean; nickname: str
           <Text>Cerco la tua posizione…</Text>
         </View>
       )}
-      {error ? (
+      {error && !picking ? (
         <View style={s.error} pointerEvents="none">
           <Text style={s.errorText}>{error}</Text>
         </View>
       ) : null}
-      <View style={s.legend} pointerEvents="none">
-        <MapLegend />
-      </View>
-      <TouchableOpacity style={s.recenter} onPress={onRecenter} accessibilityLabel="Ricentra sulla mia posizione">
-        <View style={s.target}>
-          <View style={s.targetDot} />
-        </View>
-      </TouchableOpacity>
-      {picking ? (
-        <View style={s.picking}>
-          <Text style={{ fontWeight: '700' }}>Tocca la mappa per scegliere il punto d'incontro</Text>
-          <TouchableOpacity onPress={() => setPicking(false)}><Text style={{ color: '#1d4ed8' }}>Annulla</Text></TouchableOpacity>
-        </View>
+      {!picking ? (
+        <>
+          <View style={s.legend} pointerEvents="none">
+            <MapLegend />
+          </View>
+          <TouchableOpacity style={s.recenter} onPress={onRecenter} accessibilityLabel="Ricentra sulla mia posizione">
+            <View style={s.target}>
+              <View style={s.targetDot} />
+            </View>
+          </TouchableOpacity>
+        </>
       ) : null}
-      <View style={[s.bottom, kb > 0 && { bottom: Math.max(0, kb - 60) }]}>
+      {picking ? (
+        <>
+          <View style={s.picking}>
+            <Text style={{ fontWeight: '700' }}>Muovi la mappa o toccala: il mirino indica il punto</Text>
+          </View>
+          <View style={s.crossWrap} pointerEvents="none">
+            <View style={s.crossH} />
+            <View style={s.crossV} />
+            <View style={s.crossDot} />
+          </View>
+          <View style={s.pickBar}>
+            <View style={{ flex: 1 }}><Button title="Usa questo punto" onPress={pickCenterAsMeetPoint} /></View>
+            <View style={{ flex: 1 }}><Button title="Annulla" variant="secondary" onPress={() => setPicking(false)} /></View>
+          </View>
+        </>
+      ) : null}
+      <View style={[s.bottom, kb > 0 && { bottom: Math.max(0, kb - 60) }, picking && { display: 'none' }]}>
         {selected ? (
           <View style={s.cardWrap}>
             <RiderCard
@@ -229,7 +254,12 @@ const s = StyleSheet.create({
   },
   target: { width: 22, height: 22, borderRadius: 11, borderWidth: 2.5, borderColor: '#1d4ed8', alignItems: 'center', justifyContent: 'center' },
   targetDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1d4ed8' },
-  picking: { position: 'absolute', top: 50, left: 16, right: 16, backgroundColor: 'white', padding: 12, borderRadius: 10, elevation: 6, gap: 4 },
+  picking: { position: 'absolute', top: 40, left: 16, right: 16, backgroundColor: 'white', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, elevation: 6 },
+  crossWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  crossH: { position: 'absolute', width: 44, height: 3, backgroundColor: '#dc2626' },
+  crossV: { position: 'absolute', width: 3, height: 44, backgroundColor: '#dc2626' },
+  crossDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626', borderWidth: 2, borderColor: 'white' },
+  pickBar: { position: 'absolute', left: 12, right: 12, bottom: 12, flexDirection: 'row', gap: 8, backgroundColor: 'white', padding: 10, borderRadius: 12, elevation: 6 },
   cardWrap: { marginHorizontal: 12, marginBottom: 8 },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
 });

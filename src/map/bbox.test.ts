@@ -23,3 +23,8 @@ test('movedEnough', () => {
   expect(movedEnough(a, box(45.08, 9.08, 45.28, 9.28))).toBe(true);
   expect(movedEnough(a, box(44.9, 8.9, 45.3, 9.3))).toBe(true);
 });
+
+import { bboxCenter } from './bbox';
+test('bboxCenter è il centro della zona', () => {
+  expect(bboxCenter(box(45, 9, 46, 11))).toEqual({ lat: 45.5, lng: 10 });
+});
